@@ -1,35 +1,59 @@
 <template lang='pug'>
   .box.star-card-box
-    h2 Student Loan Debt from debt guy
-    .columns
+    h2 {{ item.title }}
+    .columns.is-vcentered
       .column.is-narrow
         .box.main-number
           span $200
       .column
-        .label Total:
-          span.information-text $20,000
+        .label Current Value:
+          span.information-text ${{ item.current_value }}
         .label Interest:
-          span.information-text 5%
-        .label monthly Payment:
-          span.information-text $20
-        .label Loan Period:
-          span.information-text 30 Years
-      .column
-        b-button Action
+          span.information-text {{ item.accumulating_value }}
+        .label(v-if="item.monthly_payment") Monthly Payment:
+          span.information-text ${{ item.monthly_payment }}
+      .column.is-narrow
+        b-button.theme-dark-blue.has-text-white(
+          @click="makePayment"
+          ) Make Payment
 </template>
+<script>
+export default {
+  props: {
+    item: {
+      type: Array,
+      required: false,
+    },
+  },
+  data: function () {
+    return {
+      someThing: '',
+    };
+  },
+  methods: {
+    makePayment() {
+      //open a modal
+    },
+  }
+};
+</script>
 <style scoped>
   h2 {
-    font-weight: 400;
-    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    font-size: 20px;
+  }
+  .theme-dark-blue {
+    background-color: #1B196B;
   }
   .star-card-box {
     margin-top: 1em;
     text-align: left;
-    border: solid 1px red;
   }
   .main-number {
-      font-size: 50px;
-      text-align: center;
+    font-size: 50px;
+    text-align: center;
+    border: solid 1px red;
   }
   .information-text {
       font-weight: 300;

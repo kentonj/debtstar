@@ -1,11 +1,25 @@
 <template lang='pug'>
   .login
     .box.sign-up-box
-      b-field(label="Email")
-        b-input(type="email", v-model="userEmail", maxlength="40")
-      b-field(label="Password")
-        b-input(type="password", v-model="userPassword", password-reveal="")
-      b-button(@click="loginUser") Login
+      .columns.is-vcentered
+        .column
+          h3 WELCOME BACK
+          br
+          .columns
+            .column
+              b-input(type="email", v-model="userEmail", placeholder="Email", maxlength="40")
+          .columns
+            .column
+              b-input(type="password", v-model="userPassword", placeholder="Password", password-reveal="")
+          .columns
+            .column
+              b-button.has-text-white.theme-dark-blue(@click="loginUser") Login
+        .column
+           .login-img
+            img(
+              src="../assets/logo.svg"
+            )
+            b-button.has-text-white.theme-dark-blue(@click="signUp") Sign Up
 </template>
 <script>
 import firebase from 'firebase/app';
@@ -37,15 +51,32 @@ export default {
         .catch((e) => {
           alert(e);
         })
-    }
+    },
+    signUp() {
+      this.$router.push({ name: 'signup' });
+    }
   },
 };
 </script>
 <style scoped>
+  h3 {
+    color: #2A96C9;
+    font-size: 30px;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+  }
+  img {
+    max-width:400px !important;
+  }
   .sign-up-box {
     max-width: 600px;
     min-width: 400px;
     width: 50%;
     margin: 2em auto;
+    text-align: center;
   }
+  .theme-dark-blue {
+    background-color: #1B196B;
+  }
+  
 </style>

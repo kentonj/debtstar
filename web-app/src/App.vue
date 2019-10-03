@@ -15,7 +15,7 @@ export default {
 </script>
 <style lang="scss" scoped>
 .app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
@@ -31,4 +31,11 @@ h1 {
   margin-left: 5%;
   margin-right: 5%;
 }
+.theme-dark-blue {
+  background-color: #1B196B;
+  color: #fff;
+}
+#plaid-link-iframe-1 iframe {
+    height: 100% !important;
+  }
 </style>
