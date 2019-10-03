@@ -19,7 +19,7 @@
       .column.is-narrow
         b-field(label="Dollars")
           b-input(type="number", v-model="dollarsInvested" placeholder="Payment")
-    | See how far ${{ dollarsInvested }} will go in {{ investmentYears }} years and {{ investmentMonths }} months when you put it toward a loan or investment!
+    | See how far a single payment of ${{ dollarsInvested }} will go in {{ investmentYears }} years and {{ investmentMonths }} months when you put it toward a loan or investment!
     .dash-cards(v-for="item in itemList")
       star-card(
         :item="item"

@@ -11,7 +11,16 @@
           span.main-number-font ${{ totalEarnedOverTime }}
           p Projected Savings
       .column
+        h2 Current
         .label Current Value:
+          span.information-text ${{ item.current_value }}
+        .label Interest:
+          span.information-text {{ item.accumulating_value }}
+        .label(v-if="item.monthly_payment") Monthly Payment:
+          span.information-text ${{ item.monthly_payment }}
+      .column 
+        h2 Projection in {{ this.term }} months
+        .label Value:
           span.information-text ${{ item.current_value }}
         .label Interest:
           span.information-text {{ item.accumulating_value }}

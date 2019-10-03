@@ -7,8 +7,8 @@
         .column
           h2 Connect your bank through Plaid
           | After you click the button, we will connect to your bank account. We use the Plaid platform to do this. Dont worry though, Plaid maintains a SOC 2 compliance and constantly ensures your data is protected via strong TLS encryption and ciphers. No matter how you, and only you, access your data, its for your eyes only.
-      .columns.is-pulled-right.add-bank-style
-        add-bank-btn(
+      .columns
+        add-bank-btn.is-pulled-right(
           env="sandbox"
           publicKey="d6c6ee38bb99baa20e364f4179e9e5"
           clientName="Debt Star"
@@ -16,6 +16,11 @@
           v-bind="{ onSuccess }"
           ) Open Plaid
       b-button(@click="testL") test
+      .columns
+        .column
+          h2 Set your monthly spending budget
+          | Whats your budget? Tell us how much you plan on spending in a month and we will start crunching the numbers. The left over money from your budget will show up in your dashboard. Just a heads up, we do not transfer money out of your account automatically.
+      b-button(@click="setBugdet") Set Budget
 </template>
 <script>
 import { store } from "../store.js";
@@ -68,6 +73,6 @@ h2 {
   color: #09c;
 }
 #plaid-link-iframe-1 iframe {
-    height: 100% !important;
-  }
+  height: 100% !important;
+}
 </style>
