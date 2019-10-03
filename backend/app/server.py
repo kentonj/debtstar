@@ -57,7 +57,7 @@ plaid_client = plaid.Client(client_id = PLAID_CLIENT_ID, secret=PLAID_SECRET,
 def format_error(e):
   return {'error': {'display_message': e.display_message, 'error_code': e.code, 'error_type': e.type, 'error_message': e.message } }
 
-@app.route('/api/v1/store_access_token', methods=['POST', 'OPTIONS'])
+@app.route('/api/v1/store_access_token', methods=['POST'])
 @cross_origin()
 def store_access_token():
     '''
@@ -103,87 +103,63 @@ def store_access_token():
 
     return response
 
-def get_account_details(account_id, account_list):
-    for account in account_list:
-        if account_id == account['account_id']:
-            return account
+def extract_liability_summary(access_token):
+    liabilities_response = plaid_client.Liabilities.get(access_token=access_token)
+    account_details_list = []
+    for account in liabilities_response.get('accounts'):
+        # reset the balance to just be current balance
+        account_dict = {}
+        account_id = account.get('account_id')
+        account_dict['account_id'] = account_id
+        account_dict['current_balance'] = account['balances'].get('current')
+        account_dict['name'] = account.get('name')
+        account_dict['type'] = account.get('type')
+        account_dict['subtype'] = account.get('subtype')
+        
+        if account.get('type') in ('credit', 'loan'):
+            account_dict['is_debt'] = True
+            liabilities_dict = liabilities_response.get('liabilities')
+            
+            # create list of accounts that match the id
+            matching_student_dict_list = [x for x in liabilities_dict.get('student') if x['account_id'] == account_id]
+            matching_credit_dict_list = [x for x in liabilities_dict.get('credit') if x['account_id'] == account_id]
+            if len(matching_student_dict_list) == 1:
+                liability_details = matching_student_dict_list[0]
+                print(liability_details)
+                account_dict['interest'] = liability_details['interest_rate_percentage']
+                account_dict['minimum_payment'] =  liability_details['minimum_payment_amount']
+            elif len(matching_student_dict_list) == 1:
+                #this is the right loan details
+                liability_details = matching_credit_dict_list[0]
+                print(liability_details)
+                account_dict['interest'] = [x for x in liability_details['aprs'] if x['type'] == 'purchase_apr'][0]
+                account_dict['minimum_payment'] =  liability_details['minimum_payment_amount']
+        else:
+            account_dict['is_debt'] = False
 
-def summarize_student_debt(student_debt, all_accounts):
-    student_debt_list = []
-    for debt in student_debt:
-        debt_dict = {}
-        account_details = get_account_details(debt['account_id'], all_accounts)
-        # loan name, total, interest, period
-        debt_dict['account_id'] = debt['account_id']
-        debt_dict['name'] = account_details.get('name')
-        debt_dict['loan_name'] = debt['loan_name']
-        debt_dict['interest_rate'] = debt['interest_rate_percentage']
-        debt_dict['balance'] = debt['last_statement_balance']
-        debt_dict['expected_payoff_date'] = debt['expected_payoff_date']
-        debt_dict['last_payment_amount'] = debt['last_payment_amount']
-        debt_dict['minimum_payment_amount'] = debt['minimum_payment_amount']
-        # debt_dict['payments_remaining'] = debt['pslf_status']['payments_remaining']
-        student_debt_list.append(debt_dict)
-    return student_debt_list
+        account_details_list.append(account_dict) 
+    return account_details_list
 
-def normalize_interest_rate(interest_list):
-    # TODO: fix this, just calculates average right now
-    apr_list = [x['apr_percentage'] for x in interest_list]
-    avg_apr = sum(apr_list)/len(apr_list)
-    return round(avg_apr,4)
-
-def summarize_credit_debt(credit_debt, all_accounts):
-    credit_debt_list = []
-    for debt in credit_debt:
-        debt_dict = {}
-        account_details = get_account_details(debt['account_id'], all_accounts)
-        # loan name, total, interest, monthly payment, period
-        debt_dict['account_id'] = debt['account_id']
-        debt_dict['name'] = account_details.get('name')
-        debt_dict['purchase_apr'] = [x['apr_percentage'] for x in debt['aprs'] if x['apr_type'] == 'purchase_apr'][0]
-        # calculate effective interest rate across loans
-        debt_dict['normalized_apr'] = normalize_interest_rate(debt['aprs'])
-        debt_dict['balance'] = debt['last_statement_balance']
-        debt_dict['last_payment_amount'] = debt['last_payment_amount']
-        debt_dict['minimum_payment_amount'] = debt['minimum_payment_amount']
-        # debt_dict['payments_remaining'] = debt['pslf_status']['payments_remaining']
-        credit_debt_list.append(debt_dict)
-    return credit_debt_list
-
-@app.route('/api/v1/get_liability_summary', methods=['POST', 'OPTIONS'])
+@app.route('/api/v1/users/user_id/get_accounts_summary', methods=['GET'])
 # @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 @cross_origin()
-def get_liability_summary():
-    result = request.get_json()
-    user_id = result.get('user_id')
+def get_user_accounts_summary(user_id):
     # now get all my tokens or all my items
-    all_student_debt_list = []
-    all_credit_debt_list = []
+    all_accounts_list = []
     for token in Token.query.filter_by(user_id=user_id).all():
         # token.item_id and token.access_token
         access_token = token.access_token
-        account_response = plaid_client.Accounts.get(access_token)
-        liabilities_response = plaid_client.Liabilities.get(access_token)
-        all_accounts = account_response.get('accounts')
-        student_debt = liabilities_response['liabilities'].get('student')
-        credit_debt = liabilities_response['liabilities'].get('credit')
-        print('credit debt:', credit_debt)
-        student_debt_list = summarize_student_debt(student_debt, all_accounts)
-        credit_debt_list = summarize_credit_debt(credit_debt, all_accounts)
-        if student_debt_list is not None:
-            all_student_debt_list += student_debt_list
-        if credit_debt_list is not None:
-            all_credit_debt_list += credit_debt_list
-
-    # TODO: make sure i only have unique account ids in each list
-    data = {'student':all_student_debt_list, 'credit':all_credit_debt_list}
-    response = jsonify(data)
+        account_detail_list = extract_liability_summary(access_token)
+        all_accounts_list += account_detail_list
+    response = jsonify(all_accounts_list)
     # response.headers.add('Access-Control-Allow-Origin', '*')
     response.status_code = 200
     return response
 
-@app.route('/', methods=['GET'])
-def ping():
+@app.route('api/v1/users/<id>/ping', methods=['GET', 'OPTIONS'])
+@cross_origin()
+def ping(id):
+    data = {'pong':id}
     response = jsonify(data)
     resopnse.status_code = 200
     return response
