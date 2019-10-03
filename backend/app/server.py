@@ -14,12 +14,14 @@ CORS(app, resources={r'/*': {'origins': '*'}})
 
 
 # sanity check route
-@app.route('/get_test')
+@app.route('/get_test', methods=['GET'])
 def get_test():
     parameters = request.get_json()
     print('method: {}, parameters: {}'.format(request.method, parameters))
     if request.method == 'GET':
         post_data = request.get_json()
+        if post_data is None:
+            return jsonify({'sampledata':None})
         user_id = post_data.get('user_id')
         data = {'user_id':user_id}
     else:
@@ -27,12 +29,14 @@ def get_test():
     return jsonify(data)
 
 # sanity check route
-@app.route('/post_test')
+@app.route('/post_test', methods=['POST'])
 def post_test():
     parameters = request.get_json()
     print('method: {}, parameters: {}'.format(request.method, parameters))
     if request.method == 'POST':
         post_data = request.get_json()
+        if post_data is None:
+            return jsonify({'sampledata':None})
         user_id = post_data.get('user_id')
         data = {'user_id':user_id}
     else:
