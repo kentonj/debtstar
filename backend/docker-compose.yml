@@ -1,0 +1,32 @@
+version: '3.7'
+services:
+  postgres:
+    image: postgres:11.5-alpine
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgresql/data:/var/lib/postgresql/data
+  flask:
+    build:
+      context: .
+      dockerfile: flask.Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./app:/debtstar
+    environment:
+      PLAID_CLIENT_ID: ${PLAID_CLIENT_ID}
+      PLAID_SECRET: ${PLAID_SECRET}
+      PLAID_PUBLIC_KEY: ${PLAID_PUBLIC_KEY}
+      PLAID_ENV: ${PLAID_ENV}
+      PLAID_PRODUCTS: ${PLAID_PRODUCTS}
+      PLAID_COUNTRY_CODES: ${PLAID_COUNTRY_CODES}
+    restart: always 
+    depends_on:
+      - postgres
+    
