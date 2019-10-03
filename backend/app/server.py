@@ -3,19 +3,14 @@ from flask import render_template
 from flask import request
 from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
-# from flask_cors import CORS
+import json
 from flask_cors import CORS, cross_origin
 from firebase_admin import credentials, firestore, initialize_app
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:8080"}})
+app.config['CORS_HEADERS'] = 'Content-Type'
 
-@app.after_request
-def add_headers(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Access-Control-Allow-Headers, Origin, X-Requested-With, Content-Type, Accept, Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,HEAD')
-    response.headers.add('Access-Control-Expose-Headers', '*')
 
 import psycopg2
 import os
@@ -59,6 +54,7 @@ def format_error(e):
 
 @app.route('/api/v1/store_access_token', methods=['POST', 'OPTIONS'])
 # @cross_origin(supports_credentials=True)
+@cross_origin()
 def store_access_token():
     '''
     expected_payload = {
@@ -71,14 +67,17 @@ def store_access_token():
     public_token = result.get('public_token')
 
     if user_id is None or public_token is None:
-        response = {'error':'Appropriate values were not provided for user_id or public_token'}
-        # response.status = 403
-        return jsonify(response)
+        data = {'error':'Appropriate values were not provided for user_id or public_token'}
+        response = jsonify(data)
+        response.status_code = 403
+        return response
 
     try:
         exchange_response = plaid_client.Item.public_token.exchange(public_token)
     except plaid.errors.PlaidError as e:
-        return jsonify(format_error(e))
+        response = jsonify(format_error(e))
+        response.status_code = 403
+        return response
     access_token = exchange_response.get('access_token')
     item_id = exchange_response.get('item_id')
     
@@ -93,12 +92,12 @@ def store_access_token():
         'timestamp': firestore.SERVER_TIMESTAMP
     })
 
-    response = {'item_id':item_id}
+    data = {'item_id':item_id}
     # response.status = 200
+    response = jsonify(data)
+    response.status_code = 200
 
-    # now, use the token to retrieve stuff about the item
-
-    return jsonify(response)
+    return response
 
 def get_account_details(account_id, account_list):
     for account in account_list:
@@ -148,7 +147,7 @@ def summarize_credit_debt(credit_debt, all_accounts):
     return credit_debt_list
 
 @app.route('/api/v1/summarize_liabilities', methods=['GET'])
-@cross_origin(supports_credentials=True)
+# @cross_origin(supports_credentials=True)
 def summarize_liabilities():
     ''' TODO: take in user_id
     get all accounts tied to the user, iterate through each account, 
@@ -178,12 +177,17 @@ def summarize_liabilities():
             all_credit_debt_list += credit_debt_list
 
     # TODO: make sure i only have unique account ids in each list
-    return {'student':all_student_debt_list, 'credit':all_credit_debt_list}
+    data = {'student':all_student_debt_list, 'credit':all_credit_debt_list}
+    response = jsonify(data)
+    response.status_code = 200
+    return response
 
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def ping():
-    return 'pong'
+    response = jsonify(data)
+    resopnse.status_code = 200
+    return response
 
 @app.route('/getaccounts')
 def get_accounts():
