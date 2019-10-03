@@ -27,15 +27,12 @@ export default {
     return {
       userEmail: '',
       userPassword: '',
-      user: store.state.user,
+      user: store.state.user[0],
     }
   },
   methods: {
-    addBankUI() {
-      console.log('add bank');
-    },
     onSuccess (token) {
-      api.connectBank(token, this.userID)
+      api.connectBank(token, this.user.uid)
         .then((data) => {
           console.log(data);
         })
