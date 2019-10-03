@@ -21,7 +21,7 @@
       .column 
         h2 Projection in {{ this.term }} months
         .label Value:
-          span.information-text ${{ item.current_value }}
+          span.information-text ${{ projectedValue }}
         .label Interest:
           span.information-text {{ item.accumulating_value }}
         .label(v-if="item.monthly_payment") Monthly Payment:
@@ -58,6 +58,11 @@ export default {
       const val = Number(fv) - this.dollarsInvested;
       const formatted_val = val.toFixed(2);
       return formatted_val;
+    },
+    projectedValue() {
+      const val = this.dollarsInvested + (this.term * this.item.monthly_payment);
+      const val2 = this.item.current_value - val;
+      return Number(val2);
     },
   },
   methods: {

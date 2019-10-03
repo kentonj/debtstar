@@ -28,7 +28,7 @@ function getSummarizeLiabilities( user_id ) {
   //   'Content-Type': 'application/json',
   //   'Authorization': 'authorization',
   // };
-  return axios.get(`http://localhost:5000/api/v1/users/${user_id}/get_accounts_summary`)
+  return axios.get(`http://localhost:5000/api/v1?users=${user_id}/get_accounts_summary`)
     .then((responce) => {
       console.log(responce);
     })
