@@ -32,7 +32,7 @@ function getSummarizeLiabilities( user_id ) {
     'Authorization': 'authorization',
   };
   const url = 'http://localhost:5000/api/v1/get_liability_summary';
-  return axios.get(url, params, headers)
+  return axios.post(url, params, headers)
     .then((responce) => {
       console.log(responce);
     })
