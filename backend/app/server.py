@@ -113,13 +113,13 @@ def extract_liability_summary(access_token):
             if len(matching_student_dict_list) == 1:
                 liability_details = matching_student_dict_list[0]
                 print(liability_details)
-                account_dict['interest'] = liability_details['interest_rate_percentage']
+                account_dict['interest'] = liability_details['interest_rate_percentage'] / 100.0
                 account_dict['minimum_payment'] =  liability_details['minimum_payment_amount']
-            elif len(matching_student_dict_list) == 1:
+            elif len(matching_credit_dict_list) == 1:
                 #this is the right loan details
                 liability_details = matching_credit_dict_list[0]
                 print(liability_details)
-                account_dict['interest'] = [x for x in liability_details['aprs'] if x['type'] == 'purchase_apr'][0]
+                account_dict['interest'] = [x for x in liability_details['aprs'] if x['type'] == 'purchase_apr'][0] / 100.0
                 account_dict['minimum_payment'] =  liability_details['minimum_payment_amount']
         else:
             account_dict['is_debt'] = False
