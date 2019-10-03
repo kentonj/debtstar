@@ -10,7 +10,12 @@ from firebase_admin import credentials, firestore, initialize_app
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "http://localhost:8080"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
-
+# @app.after_request
+# def after_request(response):
+#   response.headers.add('Access-Control-Allow-Origin', '*')
+#   response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+#   response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+#   return response
 
 import psycopg2
 import os
@@ -53,7 +58,6 @@ def format_error(e):
   return {'error': {'display_message': e.display_message, 'error_code': e.code, 'error_type': e.type, 'error_message': e.message } }
 
 @app.route('/api/v1/store_access_token', methods=['POST', 'OPTIONS'])
-# @cross_origin(supports_credentials=True)
 @cross_origin()
 def store_access_token():
     '''
@@ -146,7 +150,8 @@ def summarize_credit_debt(credit_debt, all_accounts):
         credit_debt_list.append(debt_dict)
     return credit_debt_list
 
-@app.route('/api/v1/get_liability_summary', methods=['GET', 'OPTIONS'])
+@app.route('/api/v1/get_liability_summary', methods=['POST', 'OPTIONS'])
+# @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 @cross_origin()
 def get_liability_summary():
     result = request.get_json()
@@ -173,6 +178,7 @@ def get_liability_summary():
     # TODO: make sure i only have unique account ids in each list
     data = {'student':all_student_debt_list, 'credit':all_credit_debt_list}
     response = jsonify(data)
+    # response.headers.add('Access-Control-Allow-Origin', '*')
     response.status_code = 200
     return response
 
