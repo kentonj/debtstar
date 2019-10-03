@@ -5,8 +5,10 @@ import router from './router';
 import store from './store';
 import Buefy from 'buefy';
 import 'buefy/dist/buefy.css'
+import AsyncComputed from 'vue-async-computed'
 
 Vue.use(Buefy)
+Vue.use(AsyncComputed);
 
 const firebaseConfig = {
   apiKey: "AIzaSyCTPNh8MidIXB0vJQTp1aG1leI0tgDogQI",

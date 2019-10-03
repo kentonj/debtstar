@@ -2,7 +2,7 @@
   .dashboard
     .columns
       .column
-        h1 {{ userName }}'s Dashboard
+        h1 {{ userName }}'s Dashboard {{myDebtList}}
       .column.is-narrow
         .budget-box
           .budget-title
@@ -31,15 +31,16 @@
 import { store } from "../store.js";
 
 import StarCard from '@/components/StarCard.vue';
+import api from '@/services/api.js';
 
 export default {
-  name: 'dashBoard',
   components: {
     StarCard,
   },
   data: function () {
     return {
       user: store.state.user,
+      myDebtList: store.state.userDebt,
       investmentYears: 0,
       investmentMonths: 0,
       dollarsInvested: 0,

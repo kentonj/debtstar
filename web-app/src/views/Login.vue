@@ -25,6 +25,8 @@
 import firebase from 'firebase/app';
 import 'firebase/firestore';
 import { store } from "../store.js";
+import api from '@/services/api.js';
+
 
 export default {
   data: function () {
@@ -39,6 +41,7 @@ export default {
       firebase.auth().signInWithEmailAndPassword(this.userEmail, this.userPassword)
         .then((user) => {
           this.getUser(user.user.uid);
+          this.setUserAccounts(user.user.uid);
         });
     },
     getUser(userId) {
@@ -46,12 +49,20 @@ export default {
         .then((userDoc) => {
           const getData = userDoc.data();
           store.addUserData(getData);
-          this.$router.push({ name: 'home' });
+          // this.$router.push({ name: 'home' });
         })
         .catch((e) => {
           alert(e);
         })
     },
+    setUserAccounts(userId) {
+      api.getSummarizeLiabilities(userId)
+        .then((data) => {
+            console.log('at login');
+            console.log(data);
+            store.addUserDebt(data);
+        });
+    },
     signUp() {
       this.$router.push({ name: 'signup' });
     }
