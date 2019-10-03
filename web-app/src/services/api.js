@@ -46,10 +46,12 @@ function postTest(user_id) {
 }
 
 function getTest(user_id) {
-  const params = {
-    user_id,
+  const config = {
+    params: {
+      user_id
+    }
   };
   const url = 'http://localhost:5000/get_test';
-  return axios.get(url, params)
+  return axios.get(url, config)
     .then(response => response)
 }
