@@ -3,14 +3,12 @@ import Vuex from 'vuex';
 
 Vue.use(Vuex);
 
-export default new Vuex.Store({
+export const store = {
   state: {
-
+    user: [],
   },
-  mutations: {
-
-  },
-  actions: {
-
-  },
-});
+  addUserData(userInfo) {
+    this.state.user = [];
+    this.state.user.push(userInfo);
+  }
+};
