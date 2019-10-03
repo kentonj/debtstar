@@ -50,7 +50,7 @@ def format_error(e):
 def store_access_token():
     '''
     expected_payload = {
-        'uuid':'thispersonsuuidjkdlf;ajkfld;sa',
+        'user_id':'thispersonsuuidjkdlf;ajkfld;sa',
         'public_token':'this is a public token'
     }
     '''
@@ -128,40 +128,29 @@ def extract_liability_summary(access_token):
     return account_details_list
 
 @app.route('/api/v1/get_accounts_summary', methods=['GET'])
-def get_user_accounts_summary(user_id):
-    # now get all my tokens or all my items
-    params = request.args
-    user_id = params.get('user_id', None)
-    if user_id is None:
-        data = None
-        response = jsonify(data)
-        response.status_code = 403
+def get_user_accounts_summary():
+    if request.method == 'GET':
+        params = request.args
+        user_id = params.get('user_id', None)
+        if user_id is None:
+            data = None
+            response = jsonify(data)
+            response.status_code = 403
+        else:
+            all_accounts_list = []
+            for token in Token.query.filter_by(user_id=user_id).all():
+                # token.item_id and token.access_token
+                access_token = token.access_token
+                account_detail_list = extract_liability_summary(access_token)
+                all_accounts_list += account_detail_list
+            response = jsonify(all_accounts_list)
+            response.status_code = 200
         return response
-
-    all_accounts_list = []
-    for token in Token.query.filter_by(user_id=user_id).all():
-        # token.item_id and token.access_token
-        access_token = token.access_token
-        account_detail_list = extract_liability_summary(access_token)
-        all_accounts_list += account_detail_list
-    response = jsonify(all_accounts_list)
-    response.status_code = 200
-    return response
 
 # sanity check route
 @app.route('/get_test', methods=['GET'])
 def get_test():
-    parameters = request.get_json()
-    print('method: {}, parameters: {}'.format(request.method, parameters))
     if request.method == 'GET':
-        # if get_data is None:
-        #     return jsonify({'nosampledata':None})
-        print(str(request.args))
-        # arg_list = []
-        # for x in request.args:
-        #     arg_list.append(x)
-        # request_args = ','.join([len(request.args)]])
-        # request_args = ','.join(['{}-{}'.format(key, value) for key, value in request.args.items()])
         user_id = request.args.get('user_id', 'no user_id found')
         data = {'user_id':user_id}
         response = jsonify(data)
