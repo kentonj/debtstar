@@ -4,10 +4,10 @@ RUN apt-get update
 RUN apt-get install gcc -y
 # Set the working directory to /app
 
-# Copy the current directory contents into the container at /debtstar
 RUN mkdir ./debtstar
 COPY ./requirements.txt ./requirements.txt
 COPY ./app/server.py ./debtstar/server.py
+COPY ./debt-star-firebase-adminsdk-key.json ./debt-star-firebase-adminsdk-key.json
 RUN pip3 install -r requirements.txt
 
 WORKDIR /debtstar

@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.3'
 services:
   postgres:
     image: postgres:11.5-alpine
@@ -26,6 +26,9 @@ services:
       PLAID_ENV: ${PLAID_ENV}
       PLAID_PRODUCTS: ${PLAID_PRODUCTS}
       PLAID_COUNTRY_CODES: ${PLAID_COUNTRY_CODES}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     restart: always 
     depends_on:
       - postgres
