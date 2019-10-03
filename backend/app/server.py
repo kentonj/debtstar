@@ -146,9 +146,9 @@ def summarize_credit_debt(credit_debt, all_accounts):
         credit_debt_list.append(debt_dict)
     return credit_debt_list
 
-@app.route('/api/v1/summarize_liabilities', methods=['GET'])
-# @cross_origin(supports_credentials=True)
-def summarize_liabilities():
+@app.route('/api/v1/get_liability_summary', methods=['GET'])
+@cross_origin()
+def get_liability_summary():
     ''' TODO: take in user_id
     get all accounts tied to the user, iterate through each account, 
         assemble a big list of all student debts
@@ -181,7 +181,6 @@ def summarize_liabilities():
     response = jsonify(data)
     response.status_code = 200
     return response
-
 
 @app.route('/', methods=['GET'])
 def ping():
