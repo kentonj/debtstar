@@ -118,8 +118,7 @@ def extract_liability_summary(access_token):
             elif len(matching_credit_dict_list) == 1:
                 #this is the right loan details
                 liability_details = matching_credit_dict_list[0]
-                print(liability_details)
-                account_dict['interest'] = [x for x in liability_details['aprs'] if x['type'] == 'purchase_apr'][0] / 100.0
+                account_dict['interest'] = [x['apr_percentage'] for x in liability_details['aprs'] if x['apr_type'] == 'purchase_apr'][0] / 100.0
                 account_dict['minimum_payment'] =  liability_details['minimum_payment_amount']
         else:
             account_dict['is_debt'] = False
@@ -182,4 +181,6 @@ def post_test():
     return response
 
 if __name__ == '__main__':
+    # access_token = 'access-sandbox-a80895e9-baae-47ed-ae93-6f6801d597a1'
+    # extract_liability_summary(access_token =access_token)
     app.run(debug=True, host='0.0.0.0')
