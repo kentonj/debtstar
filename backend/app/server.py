@@ -8,15 +8,14 @@ from flask_cors import CORS, cross_origin
 from firebase_admin import credentials, firestore, initialize_app
 
 app = Flask(__name__)
-CORS(app, origins='*', 
-     headers=['Content-Type', 'Authorization'], 
-     expose_headers='Authorization')
-     
+cors = CORS(app, resources={r"/*": {"origins": "http://localhost:8080"}})
+
 @app.after_request
 def add_headers(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers', 'Access-Control-Allow-Headers, Origin, X-Requested-With, Content-Type, Accept, Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,HEAD')
+    response.headers.add('Access-Control-Expose-Headers', '*')
 
 import psycopg2
 import os
@@ -88,7 +87,7 @@ def store_access_token():
 
     # now it is stored in firestore
     fb_item = firestore_db.collection('items').document(item_id)
-    fb_item.update({
+    fb_item.set({
         'user_id': user_id,
         'timestamp': firestore.SERVER_TIMESTAMP
     })
@@ -184,12 +183,9 @@ def summarize_liabilities():
 def ping():
     return 'pong'
 
-# def get_transactions():
-#     response_content = request.get_json()
-#     user_id = response_content.get('user_id')
-    
-#     response = plaid_client.Transactions.get(access_token, start_date='2016-07-12', end_date='2017-01-09')
-#     transactions = response['transactions']
+@app.route('/getaccounts')
+def get_accounts():
+    token_id = ''
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
