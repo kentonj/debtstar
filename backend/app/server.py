@@ -58,7 +58,6 @@ def format_error(e):
   return {'error': {'display_message': e.display_message, 'error_code': e.code, 'error_type': e.type, 'error_message': e.message } }
 
 @app.route('/api/v1/store_access_token', methods=['POST', 'OPTIONS'])
-# @cross_origin(supports_credentials=True)
 @cross_origin()
 def store_access_token():
     '''
