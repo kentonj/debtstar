@@ -3,6 +3,8 @@ import axios from 'axios';
 export default {
   connectBank,
   getSummarizeLiabilities,
+  postTest,
+  getTest,
 };
 
 function connectBank(public_token, user_id ) {
@@ -32,4 +34,22 @@ function getSummarizeLiabilities( user_id ) {
     .then((responce) => {
       console.log(responce);
     })
+}
+
+function postTest(user_id) {
+  const params = {
+    user_id,
+  };
+  const url = 'http://localhost:5000/post_test';
+  return axios.post(url, params)
+    .then(response => response)
+}
+
+function getTest(user_id) {
+  const params = {
+    user_id,
+  };
+  const url = 'http://localhost:5000/get_test';
+  return axios.get(url, params)
+    .then(response => response)
 }

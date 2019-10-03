@@ -16,6 +16,7 @@
           v-bind="{ onSuccess }"
           ) Open Plaid
       b-button(@click="testL") test
+      b-button(@click="postTest") test post
       .columns
         .column
           h2 Set your monthly spending budget
@@ -46,6 +47,12 @@ export default {
     },
     testL () {
       api.getSummarizeLiabilities( this.user.uid )
+        .then((data) => {
+          console.log(data);
+        })
+    },
+    postTest () {
+      api.getTest( this.user.uid )
         .then((data) => {
           console.log(data);
         })
