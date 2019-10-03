@@ -2,9 +2,14 @@
   .box.star-card-box
     h2 {{ item.title }}
     .columns.is-vcentered
-      .column.is-narrow
-        .box.main-number
-          span $200
+      .column.is-narrow(v-if="item.type === 'investment'")
+        .box.main-number-invest
+          span.main-number-font ${{ totalEarnedOverTime }}
+          p Projected Earnings
+      .column.is-narrow(v-else)
+        .box.main-number-debt
+          span.main-number-font ${{ totalEarnedOverTime }}
+          p Projected Savings
       .column
         .label Current Value:
           span.information-text ${{ item.current_value }}
@@ -21,14 +26,30 @@
 export default {
   props: {
     item: {
-      type: Array,
+      type: Object,
       required: false,
+    },
+    term: {
+      type: Number,
+      default: 0,
+    },
+    dollarsInvested: {
+      type: Number,
+      default: 0,
     },
   },
   data: function () {
     return {
       someThing: '',
     };
+  },
+  computed: {
+    totalEarnedOverTime() {
+      const fv = this.dollarsInvested * (1 + this.item.accumulating_value / 12) ** (this.term);
+      const val = Number(fv) - this.dollarsInvested;
+      const formatted_val = val.toFixed(2);
+      return formatted_val;
+    },
   },
   methods: {
     makePayment() {
@@ -50,10 +71,16 @@ export default {
     margin-top: 1em;
     text-align: left;
   }
-  .main-number {
-    font-size: 50px;
+  .main-number-invest {
+    text-align: center;
+    border: solid 1px green;
+  }
+  .main-number-debt {
     text-align: center;
     border: solid 1px red;
+  }
+  .main-number-font {
+    font-size: 50px;
   }
   .information-text {
       font-weight: 300;

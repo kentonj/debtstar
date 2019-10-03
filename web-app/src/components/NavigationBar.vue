@@ -17,7 +17,7 @@
         )
       .navbar-end
         router-link.navbar-item(to='/') Dashboard
-        router-link.navbar-item(to="/addbank") Add Bank
+        router-link.navbar-item(to="/addbank") Manage Accounts
         router-link.navbar-item(to="/login") Login
 </template>
 <script>

@@ -6,9 +6,9 @@
       .column.is-narrow
         .budget-box
           .budget-title
-            span Money Under Budget
+            span Amount Under Budget
           .budget-amount
-            | $100
+            | ${{ budgetRemaining }}
     .columns
       .column.is-narrow
         b-field(label="Years")
@@ -23,6 +23,8 @@
     .dash-cards(v-for="item in itemList")
       star-card(
         :item="item"
+        :term="totalMonths"
+        :dollarsInvested="dollars_Invested"
         )
 </template>
 <script>
@@ -41,11 +43,12 @@ export default {
       investmentYears: 0,
       investmentMonths: 0,
       dollarsInvested: 0,
+      under_budget: 100,
       itemList: [
         {
           title: 'Student Debt',
           type: 'debt',
-          accumulating_value: .5,
+          accumulating_value: .05,
           monthly_payment: 200,
           current_value: 100000,
           original_value: 150000,
@@ -54,7 +57,7 @@ export default {
         {
           title: '401k Retirment Fund',
           type: 'investment',
-          accumulating_value: .3,
+          accumulating_value: .03,
           current_value: 1200,
           original_value: 1000,
         },
@@ -65,11 +68,17 @@ export default {
     userName() {
       return this.user[0].name || null;
     },
+    dollars_Invested() {
+      return Number(this.dollarsInvested);
+    },
     totalMonths() {
       var y = this.investmentYears * 12;
       var total = y + Number(this.investmentMonths);
       return total;
     },
+    budgetRemaining() {
+      return this.under_budget - this.dollars_Invested;
+    }
   }
 };
 </script>
