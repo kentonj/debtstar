@@ -58,7 +58,7 @@ def format_error(e):
   return {'error': {'display_message': e.display_message, 'error_code': e.code, 'error_type': e.type, 'error_message': e.message } }
 
 @app.route('/api/v1/store_access_token', methods=['POST', 'OPTIONS'])
-@cross_origin(supports_credentials=True)
+# @cross_origin(supports_credentials=True)
 def store_access_token():
     '''
     expected_payload = {
@@ -71,7 +71,8 @@ def store_access_token():
     public_token = result.get('public_token')
 
     if user_id is None or public_token is None:
-        response = {'status':500, 'error':'Appropriate values were not provided for user_id or public_token'}
+        response = {'error':'Appropriate values were not provided for user_id or public_token'}
+        # response.status = 403
         return jsonify(response)
 
     try:
@@ -92,7 +93,8 @@ def store_access_token():
         'timestamp': firestore.SERVER_TIMESTAMP
     })
 
-    response = {'status':'200', 'item_id':item_id}
+    response = {'item_id':item_id}
+    # response.status = 200
 
     # now, use the token to retrieve stuff about the item
 
@@ -108,7 +110,7 @@ def summarize_student_debt(student_debt, all_accounts):
     for debt in student_debt:
         debt_dict = {}
         account_details = get_account_details(debt['account_id'], all_accounts)
-        # loan name, total, interest, monthly payment, period
+        # loan name, total, interest, period
         debt_dict['account_id'] = debt['account_id']
         debt_dict['name'] = account_details.get('name')
         debt_dict['loan_name'] = debt['loan_name']
@@ -145,7 +147,7 @@ def summarize_credit_debt(credit_debt, all_accounts):
         credit_debt_list.append(debt_dict)
     return credit_debt_list
 
-@app.route('/api/v1/summarize_liabilities', methods=['POST', 'OPTIONS'])
+@app.route('/api/v1/summarize_liabilities', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def summarize_liabilities():
     ''' TODO: take in user_id
