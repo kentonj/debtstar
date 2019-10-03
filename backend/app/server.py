@@ -115,6 +115,7 @@ def summarize_student_debt(student_debt, all_accounts):
         debt_dict['loan_name'] = debt['loan_name']
         debt_dict['interest_rate'] = debt['interest_rate_percentage']
         debt_dict['balance'] = debt['last_statement_balance']
+        debt_dict['expected_payoff_date'] = debt['expected_payoff_date']
         debt_dict['last_payment_amount'] = debt['last_payment_amount']
         debt_dict['minimum_payment_amount'] = debt['minimum_payment_amount']
         # debt_dict['payments_remaining'] = debt['pslf_status']['payments_remaining']
@@ -179,9 +180,9 @@ def summarize_liabilities():
     return {'student':all_student_debt_list, 'credit':all_credit_debt_list}
 
 
-# @app.route('/')
-# def home():
-#     return {'payload':'hello there'}
+@app.route('/')
+def ping():
+    return 'pong'
 
 # def get_transactions():
 #     response_content = request.get_json()

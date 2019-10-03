@@ -16,7 +16,7 @@ services:
       context: .
       dockerfile: flask.Dockerfile
     ports:
-      - "443:5000"
+      - "5000:5000"
     volumes:
       - ./app:/debtstar
     environment:
