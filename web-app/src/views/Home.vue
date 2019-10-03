@@ -15,7 +15,6 @@ import { store } from "../store.js";
 import DashBoard from '@/components/DashBoard.vue';
 
 export default {
-  name: 'home',
   components: {
     DashBoard,
   },

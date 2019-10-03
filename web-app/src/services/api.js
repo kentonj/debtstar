@@ -23,16 +23,12 @@ function connectBank(public_token, user_id ) {
 }
 
 function getSummarizeLiabilities( user_id ) {
-  const params = {
-    user_id,
-  };
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Content-Type': 'application/json',
-    'Authorization': 'authorization',
-  };
-  const url = 'http://localhost:5000/api/v1/get_liability_summary';
-  return axios.post(url, params, headers)
+  // const headers = {
+  //   'Access-Control-Allow-Origin': '*',
+  //   'Content-Type': 'application/json',
+  //   'Authorization': 'authorization',
+  // };
+  return axios.get(`http://localhost:5000/api/v1/users/${user_id}/get_accounts_summary`)
     .then((responce) => {
       console.log(responce);
     })
