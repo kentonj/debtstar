@@ -146,15 +146,9 @@ def summarize_credit_debt(credit_debt, all_accounts):
         credit_debt_list.append(debt_dict)
     return credit_debt_list
 
-@app.route('/api/v1/get_liability_summary', methods=['GET'])
+@app.route('/api/v1/get_liability_summary', methods=['GET', 'OPTIONS'])
 @cross_origin()
 def get_liability_summary():
-    ''' TODO: take in user_id
-    get all accounts tied to the user, iterate through each account, 
-        assemble a big list of all student debts
-        assemble a big list of all credit debts
-    return to front end
-    '''
     result = request.get_json()
     user_id = result.get('user_id')
     # now get all my tokens or all my items
