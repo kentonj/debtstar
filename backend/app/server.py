@@ -4,12 +4,13 @@ from flask import request
 from flask import jsonify
 from flask_sqlalchemy import SQLAlchemy
 import json
+from datetime import datetime, timedelta
 from flask_cors import CORS, cross_origin
 from firebase_admin import credentials, firestore, initialize_app
 import psycopg2
 import os
 import plaid
-from dbmodels import Token
+from dbmodels import Token, SuperCollection
 
 POSTGRES_HOST = os.environ.get('POSTGRES_HOST', 'postgres')
 POSTGRES_PORT = os.environ.get('POSTGRES_PORT', 5432)
@@ -179,6 +180,40 @@ def post_test():
         response.status_code = 403
 
     return response
+
+def store_account_transactions(access_token, n_months):
+    now = datetime.now()
+    end = now.strftime('%Y-%m-%d')
+    start = (now - timedelta(n_months*365/12)).strftime('%Y-%m-%d')
+    transactions_response = plaid_client.Transactions.get(access_token=access_token, start_date=start, end_date=end)
+    transactions_collection = SuperCollection(collection=firestore_db.collection('transactions'),
+                                                pk_col='transaction_id')
+    keys_list = []
+    for transaction in transactions_response['transactions']:
+        transaction_id = transactions_collection.upsert(transaction)
+        keys_list.append(transaction_id)
+    return keys_list
+
+@app.route('/api/v1/sync_transactions', methods=['POST'])
+def sync_transactions():
+    if request.method == 'POST':
+        params = request.get_json()
+        user_id = params.get('user_id', None)
+        n_months = int(params.get('n_months', 3))
+        if user_id is None:
+            data = None
+            response = jsonify(data)
+            response.status_code = 403
+        else:
+            all_transactions_list = []
+            for token in Token.query.filter_by(user_id=user_id).all():
+                # token.item_id and token.access_token
+                access_token = token.access_token
+                transaction_ids = store_account_transactions(access_token, n_months)
+                all_transactions_list += transaction_ids
+            response = jsonify({'number_synced_transactions':len(all_transactions_list)})
+            response.status_code = 200
+        return response
 
 if __name__ == '__main__':
     # access_token = 'access-sandbox-a80895e9-baae-47ed-ae93-6f6801d597a1'
