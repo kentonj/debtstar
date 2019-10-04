@@ -279,7 +279,9 @@ def get_category_totals():
                 transaction_list = get_account_transactions_from_firestore(account['account_id'], n_months)
                 all_transactions_list += transaction_list
             category_totals = get_category_total(transaction_list)
-            response = jsonify(category_totals)
+            category_total_list = [{'category':key, 'total':value} for key, value in category_totals.items()]
+            data = sorted(category_total_list, key = lambda x: x['total'], reverse=True)
+            response = jsonify(data)
             response.status_code = 200
         return response
 
