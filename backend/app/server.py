@@ -79,18 +79,26 @@ def store_access_token():
     token.upsert()
 
     item_collection = SuperCollection(firestore_db.collection('items'), 'item_id')
-    item_collection.write({
-        'item_id':item_id,
-        'user_id':user_id
-    })
+    exchange_response.pop('access_token')
+    exchange_response['user_id'] = user_id
+    item_collection.write(exchange_response)
 
     # now also store all accounts from that item in firestore too
     accounts_response = plaid_client.Accounts.get(access_token=access_token)
+    account_collection = SuperCollection(firestore_db.collection('accounts'), 'account_id')
     for account in accounts_response['accounts']:
         account['user_id'] = user_id
+        account['item_id'] = item_id
         print('storing this account:', account)
-        account_collection = SuperCollection(firestore_db.collection('accounts'), 'account_id')
         account_collection.write(account)
+    
+    liability_summary_list = extract_liability_summary(access_token)
+    liability_collection = SuperCollection(firestore_db.collection('liabilities'))
+    for liability in liability_summary_list:
+        liability['user_id'] = user_id
+        liability['item_id'] = item_id
+        print('storing this liability:', liability)
+        liability_collection.write(liability)
 
     data = {'item_id':item_id}
     # response.status = 200
@@ -130,12 +138,11 @@ def extract_liability_summary(access_token):
                 account_dict['minimum_payment'] =  liability_details['minimum_payment_amount']
         else:
             account_dict['is_debt'] = False
-
         account_details_list.append(account_dict) 
     return account_details_list
 
 @app.route('/api/v1/get_accounts_summary', methods=['GET'])
-def get_user_accounts_summary():
+def get_accounts_summary():
     if request.method == 'GET':
         params = request.args
         user_id = params.get('user_id', None)
@@ -144,12 +151,8 @@ def get_user_accounts_summary():
             response = jsonify(data)
             response.status_code = 403
         else:
-            all_accounts_list = []
-            for token in Token.query.filter_by(user_id=user_id).all():
-                # token.item_id and token.access_token
-                access_token = token.access_token
-                account_detail_list = extract_liability_summary(access_token)
-                all_accounts_list += account_detail_list
+            liabilities_collection = SuperCollection(firestore_db.collection('liabilities'))
+            all_accounts_list = liabilities_collection.get_by_user(user_id)
             response = jsonify(all_accounts_list)
             response.status_code = 200
         return response
@@ -197,7 +200,7 @@ def store_account_transactions(access_token, n_months):
                                                 pk_col='transaction_id')
     keys_list = []
     for transaction in transactions_response['transactions']:
-        transaction_id = transactions_collection.upsert(transaction)
+        transaction_id = transactions_collection.write(transaction)
         keys_list.append(transaction_id)
     return keys_list
 
@@ -281,11 +284,14 @@ def get_category_totals():
             accounts_list = firestore_db.collection('accounts')\
                 .where('user_id', '==', user_id,).stream()
             for account in accounts_list:
-                transaction_list = get_account_transactions_from_firestore(account['account_id'], n_months)
+                # pass
+                account = account_snapshot.to_dict()
+                account_id = account_snapshot.id
+                transaction_list = get_account_transactions_from_firestore(account_id, n_months)
                 all_transactions_list += transaction_list
             category_total_list = get_category_stats(transaction_list)
-            data = sorted(category_total_list, key = lambda x: x['total'], reverse=True)
-            response = jsonify(data)
+            # data = sorted(category_total_list, key = lambda x: x['total'], reverse=True)
+            response = jsonify(category_total_list)
             response.status_code = 200
         return response
 
@@ -293,4 +299,7 @@ def get_category_totals():
 if __name__ == '__main__':
     # access_token = 'access-sandbox-a80895e9-baae-47ed-ae93-6f6801d597a1'
     # extract_liability_summary(access_token =access_token)
+    # user_id = 'EIKvpm56NiNPDf07ZFybSgEhFCg2'
+
+    # get_category_sample(user_id, n_months=2, request_method='GET')
     app.run(debug=True, host='0.0.0.0')
