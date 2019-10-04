@@ -2,12 +2,48 @@
 from sqlalchemy import Column, Integer, String, BigInteger, DateTime
 from sqlalchemy.sql import func
 from flask_sqlalchemy import SQLAlchemy
+from firebase_admin import credentials, firestore, initialize_app
 # from server import db
-
 # set up dummy database
 db = SQLAlchemy()
 # db = SQLAlchemy(app)
 
+
+class SuperCollection():
+    def __init__(self, collection, pk_col):
+        self.collection = collection
+        self.pk_col = pk_col
+    def upsert(self, data):
+        pk = data.get(self.pk_col)
+        data.pop(self.pk_col)
+        doc_ref = self.collection.document(pk)
+        doc = doc_ref.get()
+        data['timestamp']=firestore.SERVER_TIMESTAMP
+        if doc.exists:
+            print('doc exists!!!')
+            old_data = doc.to_dict()
+            if old_data == data:
+                pass
+            else:
+                doc_ref.update(data)
+        else:
+            doc_ref.set(data)
+        return pk
+    def write(self, data):
+        data['timestamp']=firestore.SERVER_TIMESTAMP
+        pk = data.get(self.pk_col)
+        data.pop(self.pk_col)
+        doc_ref = self.collection.document(pk)
+        doc_ref.set(data)
+        return pk
+    def update(self, data):
+        data['timestamp']=firestore.SERVER_TIMESTAMP
+        pk = data.get(self.pk_col)
+        data.pop(self.pk_col)
+        doc_ref = self.collection.document(pk)
+        doc_ref.update(data)
+        return pk
+        
 class Token(db.Model):
     __tablename__ = 'token'
     # this is the token ID

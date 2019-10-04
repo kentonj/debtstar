@@ -78,12 +78,19 @@ def store_access_token():
     token = Token(user_id=user_id, item_id=item_id, public_token=public_token, access_token=access_token)
     token.upsert()
 
-    # now it is stored in firestore
-    fb_item = firestore_db.collection('items').document(item_id)
-    fb_item.set({
-        'user_id': user_id,
-        'timestamp': firestore.SERVER_TIMESTAMP
+    item_collection = SuperCollection(firestore_db.collection('items'), 'item_id')
+    item_collection.write({
+        'item_id':item_id,
+        'user_id':user_id
     })
+
+    # now also store all accounts from that item in firestore too
+    accounts_response = plaid_client.Accounts.get(access_token=access_token)
+    for account in accounts_response['accounts']:
+        account['user_id'] = user_id
+        print('storing this account:', account)
+        account_collection = SuperCollection(firestore_db.collection('accounts'), 'account_id')
+        account_collection.write(account)
 
     data = {'item_id':item_id}
     # response.status = 200
@@ -196,6 +203,11 @@ def store_account_transactions(access_token, n_months):
 
 @app.route('/api/v1/sync_transactions', methods=['POST'])
 def sync_transactions():
+    '''
+    params:
+    user_id
+    n_months
+    '''
     if request.method == 'POST':
         params = request.get_json()
         user_id = params.get('user_id', None)
@@ -214,6 +226,63 @@ def sync_transactions():
             response = jsonify({'number_synced_transactions':len(all_transactions_list)})
             response.status_code = 200
         return response
+
+def get_category_totals(transaction_list):
+    category_totals = {}
+    for transaction in transaction_list:
+        category_list = transaction.get('category_list')
+        for category in category_list:
+            current_total = category_totals.get(category, 0)
+            current_total += transaction['amount']
+            category_totals[category] = current_total
+    return category_totals
+
+def get_account_transactions_from_firestore(account_id, n_months):
+    # get transactions last n months
+    now = datetime.now()
+    start = (now - timedelta(n_months*365/12))
+    print('start:', start, 'end:', now)
+    docs = firestore_db.collection('transactions')\
+                .where('account_id', '==', account_id,).stream()
+    data_list = []
+    for doc in docs:
+        data = doc.to_dict()
+        if (start <= datetime.strptime(data['date'], '%Y-%m-%d') <= now):
+            reduced_dict = {}
+            reduced_dict['name'] = data['name']
+            reduced_dict['amount'] = data['amount']
+            reduced_dict['date'] = data['date']
+            reduced_dict['category_list'] = data['category']
+            data_list.append(reduced_dict)
+    return data_list
+
+@app.route('/api/v1/get_category_totals', methods=['GET'])
+def get_category_totals():
+    '''
+    params:
+    user_id
+    n_months
+    '''
+    if request.method == 'GET':
+        params = request.args
+        user_id = params.get('user_id', None)
+        n_months = params.get('n_months', 3)
+        if user_id is None:
+            data = None
+            response = jsonify(data)
+            response.status_code = 403
+        else:
+            all_transactions_list = []
+            accounts_list = firestore_db.collection('accounts')\
+                .where('user_id', '==', user_id,).stream()
+            for account in accounts_list:
+                transaction_list = get_account_transactions_from_firestore(account['account_id'], n_months)
+                all_transactions_list += transaction_list
+            category_totals = get_category_total(transaction_list)
+            response = jsonify(category_totals)
+            response.status_code = 200
+        return response
+
 
 if __name__ == '__main__':
     # access_token = 'access-sandbox-a80895e9-baae-47ed-ae93-6f6801d597a1'
