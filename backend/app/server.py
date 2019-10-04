@@ -135,7 +135,7 @@ def extract_liability_summary(access_token):
     return account_details_list
 
 @app.route('/api/v1/get_accounts_summary', methods=['GET'])
-def get_user_accounts_summary():
+def get_accounts_summary():
     if request.method == 'GET':
         params = request.args
         user_id = params.get('user_id', None)
@@ -281,11 +281,14 @@ def get_category_totals():
             accounts_list = firestore_db.collection('accounts')\
                 .where('user_id', '==', user_id,).stream()
             for account in accounts_list:
-                transaction_list = get_account_transactions_from_firestore(account['account_id'], n_months)
+                # pass
+                account = account_snapshot.to_dict()
+                account_id = account_snapshot.id
+                transaction_list = get_account_transactions_from_firestore(account_id, n_months)
                 all_transactions_list += transaction_list
             category_total_list = get_category_stats(transaction_list)
-            data = sorted(category_total_list, key = lambda x: x['total'], reverse=True)
-            response = jsonify(data)
+            # data = sorted(category_total_list, key = lambda x: x['total'], reverse=True)
+            response = jsonify(category_total_list)
             response.status_code = 200
         return response
 
@@ -293,4 +296,7 @@ def get_category_totals():
 if __name__ == '__main__':
     # access_token = 'access-sandbox-a80895e9-baae-47ed-ae93-6f6801d597a1'
     # extract_liability_summary(access_token =access_token)
+    # user_id = 'EIKvpm56NiNPDf07ZFybSgEhFCg2'
+
+    # get_category_sample(user_id, n_months=2, request_method='GET')
     app.run(debug=True, host='0.0.0.0')
