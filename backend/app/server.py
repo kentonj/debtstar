@@ -66,6 +66,7 @@ def store_access_token():
         response.status_code = 403
         return response
 
+    print('exchanging access token', file=sys.stderr)
     try:
         exchange_response = plaid_client.Item.public_token.exchange(public_token)
     except plaid.errors.PlaidError as e:
@@ -76,14 +77,17 @@ def store_access_token():
     item_id = exchange_response.get('item_id')
     
     # store token in local database
+    print('storing token in local database', file=sys.stderr)
     token = Token(user_id=user_id, item_id=item_id, public_token=public_token, access_token=access_token)
     token.upsert()
 
+    print('writing item without access_token to firestore', file=sys.stderr)
     item_collection = SuperCollection(firestore_db.collection('items'), 'item_id')
     exchange_response.pop('access_token')
     exchange_response['user_id'] = user_id
     item_collection.write(exchange_response)
 
+    print('getting all accounts and storing to filestore', file=sys.stderr)
     # now also store all accounts from that item in firestore too
     accounts_response = plaid_client.Accounts.get(access_token=access_token)
     account_collection = SuperCollection(firestore_db.collection('accounts'), 'account_id')
@@ -93,14 +97,15 @@ def store_access_token():
         print('storing this account:', account)
         account_collection.write(account)
     
+    print('getting all liabilities and storing to filestore', file=sys.stderr)
     liability_summary_list = extract_liability_summary(access_token)
     liability_collection = SuperCollection(firestore_db.collection('liabilities'))
-    for liability in liability_summary_list:
+    for i, liability in enumerate(liability_summary_list):
         liability['user_id'] = user_id
         liability['item_id'] = item_id
         print('storing this liability:', liability)
         liability_collection.write(liability)
-
+    print('{} liabilities have now been stored'.format(i), file=sys.stderr)
     data = {'item_id':item_id}
     # response.status = 200
     response = jsonify(data)
@@ -108,6 +113,7 @@ def store_access_token():
     return response
 
 def extract_liability_summary(access_token):
+    print('extracting liabilities:', file=sys.stderr)
     liabilities_response = plaid_client.Liabilities.get(access_token=access_token)
     account_details_list = []
     for account in liabilities_response.get('accounts'):
