@@ -300,6 +300,6 @@ if __name__ == '__main__':
     # access_token = 'access-sandbox-a80895e9-baae-47ed-ae93-6f6801d597a1'
     # extract_liability_summary(access_token =access_token)
     # user_id = 'EIKvpm56NiNPDf07ZFybSgEhFCg2'
-
+    # sync_transactions_temp(user_id, n_months=2)
     # get_category_totals_sample(user_id, n_months=2, request_method='GET')
     app.run(debug=True, host='0.0.0.0')
