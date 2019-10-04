@@ -31,7 +31,7 @@ function getAccountsSummary(user_id) {
 function syncTransactions(user_id) {
   const params = {
     user_id,
-    n_months: 2,
+    n_months: 1,
   };
   const url = 'http://localhost:5000/api/v1/sync_transactions';
   return axios.post(url, params)

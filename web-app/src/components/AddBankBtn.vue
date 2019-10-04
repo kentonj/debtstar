@@ -1,6 +1,6 @@
 <template lang='pug'>
   .plaid-link-wrapper
-    b-button(
+    b-button.theme-dark-blue.has-text-white(
       @click="handleOnClick"
       ) Connect Bank
 </template>
@@ -98,5 +98,8 @@ export default {
 <style>
   #plaid-link-iframe-1 iframe {
     height: 100% !important;
+  }
+  .theme-dark-blue {
+    background-color: #1B196B !important;
   }
 </style>

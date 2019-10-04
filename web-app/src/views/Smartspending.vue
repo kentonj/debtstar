@@ -1,9 +1,10 @@
 <template lang='pug'>
   #app
-    .container
+    .container.top-part
       .columns
         .column
           .title Total Spending
+          .label Time Period: 1 Month
           graph-pie(
               :width='400'
               :height='400'
@@ -24,7 +25,8 @@
             p suggestion 2
           hr
           .label
-          | Total Spent: $2,000
+            | Total Spent: ${{totalSpent}}
+            
 </template>
 <script>
 import { store } from "../store.js";
@@ -36,9 +38,6 @@ export default {
   components: { VueGraph },
   data: function () {
     return {
-      values: [ 10, 5, 3, 7 ],
-      names: [ 'Dining', 'Rent', 'Loans', 'Shopping' ],
-      colors: ["#000", "#333", "#999", "#bbb", "#eee"],
       user: store.state.user,
     }
   },
@@ -49,11 +48,30 @@ export default {
       },
       default: 'No fanciness'
     }
-  }
+  },
+  computed: {
+    values() {
+      // const officersIds = categoryList.map(category => category.value);
+      return [ 10, 5, 3, 7 ];
+    },
+    names() {
+      // const officersIds = categoryList.map(category => category.name);
+      return [ 'Dining', 'Rent', 'Loans', 'Shopping' ];
+    },
+    colors() {
+      return ["#B1D4E0", "#2E8BC0", "#189AB4", "#145DA0", "#eee"];
+    },
+    totalSpent() {
+      return 1000;
+    }
+  },
 };
 </script>
 
 <style>
+.top-part{
+  margin-top: 2em !important;
+}
 .title {
   font-size: 2em;
   margin-bottom: 1em;
@@ -65,6 +83,6 @@ h2 {
 .container {
   margin-left: 5%;
   margin-right: 5%;
-  margin-top: 50px;
+  margin-top: 150px;
 }
 </style>

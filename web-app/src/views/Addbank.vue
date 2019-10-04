@@ -15,11 +15,6 @@
           product="transactions"
           v-bind="{ onSuccess }"
           ) Open Plaid
-      .columns
-        .column
-          h2 Set your monthly spending budget
-          | Whats your budget? Tell us how much you plan on spending in a month and we will start crunching the numbers. The left over money from your budget will show up in your dashboard. Just a heads up, we do not transfer money out of your account automatically.
-      b-button(@click="setBugdet") Set Budget
 </template>
 <script>
 import { store } from "../store.js";
@@ -38,11 +33,9 @@ export default {
   },
   methods: {
     onSuccess (token) {
-      console.log(token);
+      api.connectBank(token, this.user.uid)
+        .then(response => response)
     },
-    setBugdet() {
-      console.log('aaaahhh');
-    }
   },
 };
 </script>
@@ -65,6 +58,9 @@ h2 {
   margin-right: 5%;
   margin-top: 50px;
 }
+.theme-dark-blue {
+    background-color: #1B196B !important;
+  }
 .add-bank-style {
   font-size: 20px;
   color: #09c;
