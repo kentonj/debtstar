@@ -227,15 +227,20 @@ def sync_transactions():
             response.status_code = 200
         return response
 
-def get_category_totals(transaction_list):
+def get_category_stats(transaction_list):
     category_totals = {}
     for transaction in transaction_list:
         category_list = transaction.get('category_list')
         for category in category_list:
-            current_total = category_totals.get(category, 0)
-            current_total += transaction['amount']
-            category_totals[category] = current_total
-    return category_totals
+            running_vals = category_totals.get(category, None)
+            if running_vals is None:
+                running_vals = {'count':0, 'amount':0}
+            running_vals['amount'] += transaction['amount']
+            running_vals['count'] += 1
+            category_totals[category] = running_vals
+    # reformat for frontend
+    category_total_list = [{'category':key, 'total':value['amount'], 'count':value['count']} for key, value in category_totals.items()]
+    return category_total_list
 
 def get_account_transactions_from_firestore(account_id, n_months):
     # get transactions last n months
@@ -278,8 +283,7 @@ def get_category_totals():
             for account in accounts_list:
                 transaction_list = get_account_transactions_from_firestore(account['account_id'], n_months)
                 all_transactions_list += transaction_list
-            category_totals = get_category_total(transaction_list)
-            category_total_list = [{'category':key, 'total':value} for key, value in category_totals.items()]
+            category_total_list = get_category_stats(transaction_list)
             data = sorted(category_total_list, key = lambda x: x['total'], reverse=True)
             response = jsonify(data)
             response.status_code = 200
