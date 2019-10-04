@@ -11,3 +11,5 @@ Student and consumer debt is a huge problem. Like any problem we believe the fir
   - Plaid API interaction - token exchange, accessing resources
   - Local postgres DB for storing access tokens
   - Read/Writes to/from Cloud Firestore
+
+Check out the READMEs in the `web-app` and `backend` directories for details on implementation and deployment.
