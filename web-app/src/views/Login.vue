@@ -59,6 +59,7 @@ export default {
     setUserAccounts(userId) {
       api.getAccountsSummary(userId)
         .then((data) => {
+          console.log(data);
           store.addUserDebt(data);
         });
     },

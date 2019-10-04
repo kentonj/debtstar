@@ -20,9 +20,9 @@
         .column
           .title Saving Suggestions
           .box
-            p suggestion
+            p Try carpooling or planning routes to save money on gas.
           .box
-            p suggestion 2
+            p Making your own coffee in the morning could cut down your dining cost.
           hr
           .label
             | Total Spent: ${{totalSpent}}

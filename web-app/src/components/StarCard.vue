@@ -6,12 +6,12 @@
         .box.main-number-invest
           span.main-number-font ${{ totalEarnedOverTime }}
           P Value of ${{ dollarsInvested }}
-          p Invested over {{this.term}} months
+          p with savings over {{this.term}} months
       .column.is-narrow(v-else)
         .box.main-number-debt
           span.main-number-font ${{ totalEarnedOverTime }}
           P Value of ${{ dollarsInvested}}
-          p In savings over {{this.term}} months
+          p with savings over {{this.term}} months
       .column
         h2 Current
         .label.has-text-grey-dark Current Value:
@@ -35,6 +35,7 @@
       .column.is-narrow
         b-button.theme-dark-blue.has-text-white(
           @click="makePayment"
+          disabled="true"
           ) Make Payment
 </template>
 <script>
