@@ -42,6 +42,7 @@ export default {
         .then((user) => {
           this.getUser(user.user.uid);
           this.setUserAccounts(user.user.uid);
+          this.syncTransactions(user.user.uid);
         });
     },
     getUser(userId) {
@@ -49,18 +50,22 @@ export default {
         .then((userDoc) => {
           const getData = userDoc.data();
           store.addUserData(getData);
-          // this.$router.push({ name: 'home' });
+          this.$router.push({ name: 'home' });
         })
         .catch((e) => {
           alert(e);
         })
     },
     setUserAccounts(userId) {
-      api.getSummarizeLiabilities(userId)
+      api.getAccountsSummary(userId)
         .then((data) => {
-            console.log('at login');
-            console.log(data);
-            store.addUserDebt(data);
+          store.addUserDebt(data);
+        });
+    },
+    syncTransactions(userId) {
+      api.syncTransactions(userId)
+        .then(() => {
+          api.getCategoryTotals(userId)
         });
     },
     signUp() {
@@ -69,7 +74,7 @@ export default {
   },
 };
 </script>
-<style scoped>
+<style>
   h3 {
     color: #2A96C9;
     font-size: 30px;
@@ -87,7 +92,7 @@ export default {
     text-align: center;
   }
   .theme-dark-blue {
-    background-color: #1B196B;
+    background-color: #1B196B !important;
   }
   
 </style>

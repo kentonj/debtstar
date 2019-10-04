@@ -2,7 +2,7 @@
   .addBank
     .container
       .columns
-        h1 Manage Accounts
+        .title Manage Accounts
       .columns
         .column
           h2 Connect your bank through Plaid
@@ -15,8 +15,6 @@
           product="transactions"
           v-bind="{ onSuccess }"
           ) Open Plaid
-      b-button(@click="testL") test
-      b-button(@click="postTest") test post
       .columns
         .column
           h2 Set your monthly spending budget
@@ -40,28 +38,20 @@ export default {
   },
   methods: {
     onSuccess (token) {
-      api.connectBank(token, this.user.uid)
-        .then((data) => {
-          console.log(data);
-        })
+      console.log(token);
     },
-    testL () {
-      api.getSummarizeLiabilities( this.user.uid )
-        .then((data) => {
-          console.log(data);
-        })
-    },
-    postTest () {
-      api.getTest( this.user.uid )
-        .then((data) => {
-          console.log(data);
-        })
-    },
+    setBugdet() {
+      console.log('aaaahhh');
+    }
   },
 };
 </script>
 
 <style lang="scss" scoped>
+.title {
+    font-size: 2em;
+    margin-bottom: 1em;
+}
 h1 {
   font-size: 2em;
   margin-bottom: 1em;

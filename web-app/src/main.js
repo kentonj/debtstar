@@ -6,7 +6,9 @@ import store from './store';
 import Buefy from 'buefy';
 import 'buefy/dist/buefy.css'
 import AsyncComputed from 'vue-async-computed'
-
+import VueGraph from 'vue-graph'
+ 
+Vue.use(VueGraph)
 Vue.use(Buefy)
 Vue.use(AsyncComputed);
 

@@ -2,30 +2,33 @@
   .dashboard
     .columns
       .column
-        h1 {{ userName }}'s Dashboard {{myDebtList}}
-      .column.is-narrow
-        .budget-box
-          .budget-title
-            span Amount Under Budget
-          .budget-amount
-            | ${{ budgetRemaining }}
-    .columns
-      .column.is-narrow
-        b-field(label="Years")
-          b-input(type="number", v-model="investmentYears" placeholder="years")
-      .column.is-narrow
-        b-field(label="Months")
-          b-input(type="number", v-model="investmentMonths" placeholder="months")
-      .column.is-narrow
-        b-field(label="Dollars")
-          b-input(type="number", v-model="dollarsInvested" placeholder="Payment")
-    | See how far a single payment of ${{ dollarsInvested }} will go in {{ investmentYears }} years and {{ investmentMonths }} months when you put it toward a loan or investment!
-    .dash-cards(v-for="item in itemList")
-      star-card(
-        :item="item"
-        :term="totalMonths"
-        :dollarsInvested="dollars_Invested"
-        )
+        .title {{ userName }}'s Debt Annihilator
+    .has-bank(v-if="itemList2.length")
+      .columns
+        .column.is-narrow
+          b-field(label="Years")
+            b-input(type="number", v-model="investmentYears" placeholder="years")
+        .column.is-narrow
+          b-field(label="Months")
+            b-input(type="number", v-model="investmentMonths" placeholder="months")
+        .column.is-narrow
+          b-field(label="Dollars")
+            b-input(type="number", v-model="dollarsInvested" placeholder="Payment")
+      span.is-thin See how far
+        span.is-fat &nbsp; a single payment of ${{ dollarsInvested }} today
+          span.is-thin &nbsp; will go in {{ investmentYears }} years and {{ investmentMonths }} months when you put it toward a loan or investment!
+      .dash-cards(
+        v-for="item in itemList2")
+        star-card(
+          :item="item"
+          :term="totalMonths"
+          :dollarsInvested="dollars_Invested"
+          )
+    .set-account-message(v-else)
+      .welcome-text
+        | Welcome,
+      h2 Looks like you do not have a bank account set up with Debt Star
+      b-button(@click="goToSetUp") Set Up Account
 </template>
 <script>
 import { store } from "../store.js";
@@ -45,29 +48,14 @@ export default {
       investmentMonths: 0,
       dollarsInvested: 0,
       under_budget: 100,
-      itemList: [
-        {
-          title: 'Student Debt',
-          type: 'debt',
-          accumulating_value: .05,
-          monthly_payment: 200,
-          current_value: 100000,
-          original_value: 150000,
-          loan_period_remaining: 3,
-        },
-        {
-          title: '401k Retirment Fund',
-          type: 'investment',
-          accumulating_value: .03,
-          current_value: 1200,
-          original_value: 1000,
-        },
-      ],
     }
   },
   computed: {
     userName() {
-      return this.user[0].name || null;
+      return this.user[0] ? this.user[0].name : 'User';
+    },
+    itemList2() {
+      return this.myDebtList[0] ? this.myDebtList[0].data : [];
     },
     dollars_Invested() {
       return Number(this.dollarsInvested);
@@ -80,14 +68,25 @@ export default {
     budgetRemaining() {
       return this.under_budget - this.dollars_Invested;
     }
+  },
+  methods: {
+    goToSetUp() {
+      this.$router.push({ name: 'addbank' });
+    },
   }
 };
 </script>
 
 <style lang="scss" scoped>
-h1 {
+.title {
   font-size: 2em;
   margin-bottom: 1em;
+}
+.welcome-text {
+  font-size: 2em;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  color: #2A96C9;
 }
 .container {
   margin-left: 5%;
@@ -115,5 +114,13 @@ h1 {
 }
 .theme-dark-blue {
     background-color: #1B196B;
+}
+.is-thin {
+  font-weight: 400;
+  color: #000;
+}
+.is-fat {
+  font-weight: 700;
+  color: #2A96C9;
 }
 </style>

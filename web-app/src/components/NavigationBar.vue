@@ -3,7 +3,7 @@
   nav.navbar.is-nav
     .navbar-brand.navigation-brand
       .navbar-item
-         h2 Debt Star
+        h3 Debt Star
       span.navbar-burger.burger(
           v-bind:class="{ 'is-active': menuIsOpen }"
           @click='toggleMenu'
@@ -16,7 +16,8 @@
         v-bind:class="{ 'is-active': menuIsOpen }"
         )
       .navbar-end
-        router-link.navbar-item(to='/') Dashboard
+        router-link.navbar-item(to='/') Debt Annihilator
+        router-link.navbar-item(to="/smartspending") Smart Spending
         router-link.navbar-item(to="/addbank") Manage Accounts
         router-link.navbar-item(to="/login") Login
 </template>
@@ -35,8 +36,14 @@
       }
     };
 </script>
-<style scoped>
-  .navigation-brand {
-    background-color: #eee;
+<style>
+  h3 {
+    color: #2A96C9 !important;
+    font-size: 25px;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+  }
+  img {
+    max-width:50px !important;
   }
 </style>

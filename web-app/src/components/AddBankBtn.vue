@@ -3,9 +3,6 @@
     b-button(
       @click="handleOnClick"
       ) Connect Bank
-    //- slot(name='button' v-bind:onclick='handleOnClick')
-    //-   button.plaid-link-button(@click='handleOnClick')
-    //-     slot
 </template>
 
 <script>
@@ -65,9 +62,9 @@ export default {
                 token: this.token,
                 webhook: this.webhook
             })
-            setTimeout(function(){ 
+            setTimeout(function(){
               document.getElementById("plaid-link-iframe-1").style.height = "100%";
-             }, 2000);
+             }, 4000);
         },
         handleOnClick () {
             const institution = this.institution || null

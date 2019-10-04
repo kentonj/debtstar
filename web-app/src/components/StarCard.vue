@@ -1,31 +1,37 @@
 <template lang='pug'>
-  .box.star-card-box
-    h2 {{ item.title }}
+  .box.star-card-box(v-if="item.is_debt")
+    h3 {{ item.name }}
     .columns.is-vcentered
-      .column.is-narrow(v-if="item.type === 'investment'")
+      .column.is-narrow(v-if="!item.is_debt")
         .box.main-number-invest
           span.main-number-font ${{ totalEarnedOverTime }}
-          p Projected Earnings
+          P Value of ${{ dollarsInvested }}
+          p Invested over {{this.term}} months
       .column.is-narrow(v-else)
         .box.main-number-debt
           span.main-number-font ${{ totalEarnedOverTime }}
-          p Projected Savings
+          P Value of ${{ dollarsInvested}}
+          p In savings over {{this.term}} months
       .column
         h2 Current
-        .label Current Value:
-          span.information-text ${{ item.current_value }}
-        .label Interest:
-          span.information-text {{ item.accumulating_value }}
-        .label(v-if="item.monthly_payment") Monthly Payment:
-          span.information-text ${{ item.monthly_payment }}
+        .label.has-text-grey-dark Current Value:
+          span.information-text &nbsp; ${{ item.current_balance }}
+        .label.has-text-grey-dark Interest:
+          span.information-text &nbsp; {{ item.interest * 100 }}%
+        .label.has-text-grey-dark(v-if="item.minimum_payment") Monthly Payment:
+          span.information-text &nbsp; ${{ item.minimum_payment }}
+        .label.has-text-grey-dark Monthly Interest:
+          span.information-text &nbsp; ${{ currentMonthlyInterest }}
       .column 
-        h2 Projection in {{ this.term }} months
-        .label Value:
-          span.information-text ${{ projectedValue }}
-        .label Interest:
-          span.information-text {{ item.accumulating_value }}
-        .label(v-if="item.monthly_payment") Monthly Payment:
-          span.information-text ${{ item.monthly_payment }}
+        h2 Projection In {{ this.term }} Months
+        .label.has-text-grey-dark(v-if="item.is_debt") Value Remaining:
+          span.information-text &nbsp; ${{ projectedValue }}
+        .label.has-text-grey-dark Interest:
+          span.information-text &nbsp; {{ item.interest * 100 }}%
+        .label.has-text-grey-dark(v-if="item.minimum_payment") Monthly Payment:
+          span.information-text &nbsp; ${{ item.minimum_payment }}
+        .label.has-text-grey-dark Monthly Interest:
+          span.information-text &nbsp; ${{ futureMonthlyInterest }}
       .column.is-narrow
         b-button.theme-dark-blue.has-text-white(
           @click="makePayment"
@@ -54,16 +60,24 @@ export default {
   },
   computed: {
     totalEarnedOverTime() {
-      const fv = this.dollarsInvested * (1 + this.item.accumulating_value / 12) ** (this.term);
-      const val = Number(fv) - this.dollarsInvested;
+      const fv = this.dollarsInvested * (1 + this.item.interest / 12) ** (this.term);
+      const val = Number(fv);
       const formatted_val = val.toFixed(2);
       return formatted_val;
     },
     projectedValue() {
-      const val = this.dollarsInvested + (this.term * this.item.monthly_payment);
-      const val2 = this.item.current_value - val;
-      return Number(val2);
+      const val = this.dollarsInvested + (this.term * this.item.minimum_payment);
+      const val2 = this.item.current_balance - val;
+      return Number(val2).toFixed(2);
     },
+    futureMonthlyInterest() {
+      const val = (this.projectedValue * (this.item.interest / 12));
+      return Number(val).toFixed(2);
+    },
+    currentMonthlyInterest() {
+      const val = (this.item.current_balance * (this.item.interest / 12));
+      return Number(val).toFixed(2);
+    }
   },
   methods: {
     makePayment() {
@@ -77,6 +91,13 @@ export default {
     font-weight: 700;
     margin-bottom: 5px;
     font-size: 20px;
+  }
+  h3 {
+    font-weight: 700;
+    margin-bottom: 5px;
+    font-size: 20px;
+    color: #1B196B !important;
+    font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   }
   .theme-dark-blue {
     background-color: #1B196B;

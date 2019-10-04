@@ -14,7 +14,7 @@
           .columns
             .column
               b-input(type="password", v-model="userPassword", placeholder="Password", password-reveal="")
-          b-button.has-text-white.theme-dark-blue(@click="signUpNewUserr") Sign Up
+          b-button.has-text-white.theme-dark-blue(@click="signUpNewUser") Sign Up
         .column
           .login-img
             img(

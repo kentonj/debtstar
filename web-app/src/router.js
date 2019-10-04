@@ -4,6 +4,7 @@ import Home from './views/Home.vue';
 import Login from './views/Login.vue';
 import Signup from './views/Signup.vue';
 import Addbank from './views/Addbank.vue';
+import Smartspending from './views/Smartspending.vue';
 
 Vue.use(Router);
 
@@ -30,6 +31,11 @@ export default new Router({
       path: '/Addbank',
       name: 'addbank',
       component: Addbank,
+    },
+    {
+      path: '/Smartspending',
+      name: 'smartspending',
+      component: Smartspending,
     },
   ],
 });
