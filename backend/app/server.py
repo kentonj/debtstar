@@ -11,6 +11,7 @@ import psycopg2
 import os
 import plaid
 from dbmodels import Token, SuperCollection
+import sys
 
 POSTGRES_HOST = os.environ.get('POSTGRES_HOST', 'postgres')
 POSTGRES_PORT = os.environ.get('POSTGRES_PORT', 5432)
@@ -146,15 +147,20 @@ def get_accounts_summary():
     if request.method == 'GET':
         params = request.args
         user_id = params.get('user_id', None)
+        print('CALLING /api/v1/get_accounts_summary for user_id={}'.format(user_id), file=sys.stderr)
         if user_id is None:
             data = None
             response = jsonify(data)
             response.status_code = 403
         else:
+            print('Initializing liabilities collection', file=sys.stderr)
             liabilities_collection = SuperCollection(firestore_db.collection('liabilities'))
+            print('successfully initialized liabilities collection, calling .get_by_user', file=sys.stderr)
             all_accounts_list = liabilities_collection.get_by_user(user_id)
+            print('got account (liabilities) list from .get_by_user, packagin json response', file=sys.stderr)
             response = jsonify(all_accounts_list)
             response.status_code = 200
+        print('heres your response from /api/v1/get_accounts_summary:{}'.format(response.status_code), file=sys.stderr)
         return response
 
 # sanity check route
@@ -200,6 +206,7 @@ def store_account_transactions(access_token, n_months, user_id):
                                                 pk_col='transaction_id')
     keys_list = []
     for transaction in transactions_response['transactions']:
+        transaction['user_id'] = user_id
         transaction_id = transactions_collection.write(transaction)
         keys_list.append(transaction_id)
     return keys_list
@@ -245,13 +252,13 @@ def get_category_stats(transaction_list):
     category_total_list = [{'category':key, 'total':value['amount'], 'count':value['count']} for key, value in category_totals.items()]
     return category_total_list
 
-def get_account_transactions_from_firestore(account_id, n_months):
+def get_account_transactions_from_firestore(user_id, n_months):
     # get transactions last n months
     now = datetime.now()
     start = (now - timedelta(int(n_months)*365/12))
     print('start:', start, 'end:', now)
     docs = firestore_db.collection('transactions')\
-                .where('account_id', '==', account_id,).stream()
+                .where('user_id', '==', user_id,).stream()
     data_list = []
     for doc in docs:
         data = doc.to_dict()
@@ -275,25 +282,32 @@ def get_category_totals():
         params = request.args
         user_id = params.get('user_id', None)
         n_months = params.get('n_months', 3)
+        print('starting call to /api/v1/get_category_totals with params:{}'.format(params), file=sys.stderr)
         if user_id is None:
             data = None
             response = jsonify(data)
             response.status_code = 403
         else:
-            all_transactions_list = []
-            account_snapshot_list = firestore_db.collection('accounts')\
-                .where('user_id', '==', user_id,).stream()
-            for account_snapshot in account_snapshot_list:
-                # pass
-                account = account_snapshot.to_dict()
-                account_id = account_snapshot.id
-                transaction_list = get_account_transactions_from_firestore(account_id, n_months)
-                
-                all_transactions_list += transaction_list
-            category_total_list = get_category_stats(transaction_list)
+            # all_transactions_list = []
+            # account_snapshot_list = firestore_db.collection('accounts')\
+            #     .where('user_id', '==', user_id,).stream()
+            # for account_snapshot in account_snapshot_list:
+            #     # pass
+            #     account = account_snapshot.to_dict()
+            #     account_id = account_snapshot.id
+            print('getting all transactions', file=sys.stderr)
+            all_transactions_list = get_account_transactions_from_firestore(user_id, n_months)
+            print('got all transactions, getting the stats', file=sys.stderr)
+            # # all_transactions_list += transaction_list
+            category_total_list = get_category_stats(all_transactions_list)
+            print('got the stats (len-{}:{}'.format(len(category_total_list),category_total_list), file=sys.stderr)
             # data = sorted(category_total_list, key = lambda x: x['total'], reverse=True)
-            response = jsonify(category_total_list)
+            print('packaging JSON', file=sys.stderr)
+            data = category_total_list
+            response = jsonify(data)
             response.status_code = 200
+        print('heres your response:{}'.format(response.status_code), file=sys.stderr)
+        print('heres your full response:{}'.format(response), file=sys.stderr)
         return response
 
 if __name__ == '__main__':
