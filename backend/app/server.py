@@ -79,16 +79,16 @@ def store_access_token():
     token.upsert()
 
     item_collection = SuperCollection(firestore_db.collection('items'), 'item_id')
-    item_collection.write({
-        'item_id':item_id,
-        'user_id':user_id
-    })
+    exchange_response.pop('access_token')
+    exchange_response['user_id'] = user_id
+    item_collection.write(exchange_response)
 
     # now also store all accounts from that item in firestore too
     accounts_response = plaid_client.Accounts.get(access_token=access_token)
     account_collection = SuperCollection(firestore_db.collection('accounts'), 'account_id')
     for account in accounts_response['accounts']:
         account['user_id'] = user_id
+        account['item_id'] = item_id
         print('storing this account:', account)
         account_collection.write(account)
     
@@ -96,6 +96,7 @@ def store_access_token():
     liability_collection = SuperCollection(firestore_db.collection('liabilities'))
     for liability in liability_summary_list:
         liability['user_id'] = user_id
+        liability['item_id'] = item_id
         print('storing this liability:', liability)
         liability_collection.write(liability)
 
