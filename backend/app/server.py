@@ -138,7 +138,7 @@ def extract_liability_summary(access_token):
                 account_dict['minimum_payment'] =  liability_details['minimum_payment_amount']
         else:
             account_dict['is_debt'] = False
-        account_details_list.append(account_dict) 
+        account_details_list.append(account_dict)
     return account_details_list
 
 @app.route('/api/v1/get_accounts_summary', methods=['GET'])
@@ -191,7 +191,7 @@ def post_test():
 
     return response
 
-def store_account_transactions(access_token, n_months):
+def store_account_transactions(access_token, n_months, user_id):
     now = datetime.now()
     end = now.strftime('%Y-%m-%d')
     start = (now - timedelta(n_months*365/12)).strftime('%Y-%m-%d')
@@ -224,7 +224,7 @@ def sync_transactions():
             for token in Token.query.filter_by(user_id=user_id).all():
                 # token.item_id and token.access_token
                 access_token = token.access_token
-                transaction_ids = store_account_transactions(access_token, n_months)
+                transaction_ids = store_account_transactions(access_token, n_months, user_id)
                 all_transactions_list += transaction_ids
             response = jsonify({'number_synced_transactions':len(all_transactions_list)})
             response.status_code = 200
@@ -281,13 +281,14 @@ def get_category_totals():
             response.status_code = 403
         else:
             all_transactions_list = []
-            accounts_list = firestore_db.collection('accounts')\
+            account_snapshot_list = firestore_db.collection('accounts')\
                 .where('user_id', '==', user_id,).stream()
-            for account in accounts_list:
+            for account_snapshot in account_snapshot_list:
                 # pass
                 account = account_snapshot.to_dict()
                 account_id = account_snapshot.id
                 transaction_list = get_account_transactions_from_firestore(account_id, n_months)
+                
                 all_transactions_list += transaction_list
             category_total_list = get_category_stats(transaction_list)
             # data = sorted(category_total_list, key = lambda x: x['total'], reverse=True)
@@ -295,11 +296,10 @@ def get_category_totals():
             response.status_code = 200
         return response
 
-
 if __name__ == '__main__':
     # access_token = 'access-sandbox-a80895e9-baae-47ed-ae93-6f6801d597a1'
     # extract_liability_summary(access_token =access_token)
     # user_id = 'EIKvpm56NiNPDf07ZFybSgEhFCg2'
 
-    # get_category_sample(user_id, n_months=2, request_method='GET')
+    # get_category_totals_sample(user_id, n_months=2, request_method='GET')
     app.run(debug=True, host='0.0.0.0')
