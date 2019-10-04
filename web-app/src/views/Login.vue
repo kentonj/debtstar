@@ -56,17 +56,13 @@ export default {
           alert(e);
         })
     },
-    setUserAccounts(userId) {
-      api.getAccountsSummary(userId)
-        .then((data) => {
-          console.log(data);
-          store.addUserDebt(data);
-        });
-    },
     syncTransactions(userId) {
       api.syncTransactions(userId)
         .then(() => {
           api.getCategoryTotals(userId)
+            .then((data) => {
+              store.addUserSpending(data);
+            });
         });
     },
     signUp() {

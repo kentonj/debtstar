@@ -6,26 +6,31 @@
           .title Total Spending
           .label Time Period: 1 Month
           graph-pie(
-              :width='400'
-              :height='400'
+              :width='500'
+              :height='500'
               :values='values'
+              :padding-top="100"
+              :padding-bottom="100"
+              :padding-left="100"
+              :padding-right="100"
               :names='names'
               :colors='colors'
               :active-index='[ 0, 2 ]'
               :active-event="'click'"
-              :show-text-type="'inside'"
+              :show-text-type="'outside'"
               )
           legends(:names='names')
           tooltip(:names='names')
-        .column
-          .title Saving Suggestions
-          .box
-            p Try carpooling or planning routes to save money on gas.
-          .box
-            p Making your own coffee in the morning could cut down your dining cost.
-          hr
-          .label
-            | Total Spent: ${{totalSpent}}
+        .columns
+          .column
+            .title Saving Suggestions
+            .box
+              p Try carpooling or planning routes to save money on gas.
+            .box
+              p Making your own coffee in the morning could cut down your dining cost.
+            hr
+            .label
+              | Total Spent: ${{totalSpent}}
             
 </template>
 <script>
@@ -39,30 +44,37 @@ export default {
   data: function () {
     return {
       user: store.state.user,
+      userSpending: store.state.userSpending,
+      categoryList: [],
     }
   },
-  asyncComputed: {
-    categoryList: {
-      get () {
-        return api.getAccountsSummary(user[0].uid)
-      },
-      default: 'No fanciness'
-    }
+  methods: {
+    openStuff() {
+      api.getCategoryTotals(this.user[0].uid)
+        .then((data) => {
+          this.categoryList = data.data;
+       });
+    },
+  },
+  mounted(){
+    this.openStuff();
   },
   computed: {
     values() {
-      // const officersIds = categoryList.map(category => category.value);
-      return [ 10, 5, 3, 7 ];
+      const total = this.categoryList.map(cat => cat.total);
+      return total;
     },
     names() {
-      // const officersIds = categoryList.map(category => category.name);
-      return [ 'Dining', 'Rent', 'Loans', 'Shopping' ];
+      const category = this.categoryList.map(cat => cat.category);
+      return category;
     },
     colors() {
-      return ["#B1D4E0", "#2E8BC0", "#189AB4", "#145DA0", "#eee"];
+      return ["#B1D4E0", "#2E8BC0", "#189AB4", "#145DA0", "#eee","#B1D4E0", "#2E8BC0", "#189AB4", "#145DA0", "#eee"];
     },
     totalSpent() {
-      return 1000;
+      const totalS = this.values.reduce((a, b) => a + b, 0);
+      const formatTotal = Number(totalS).toFixed(2);
+      return formatTotal;
     }
   },
 };

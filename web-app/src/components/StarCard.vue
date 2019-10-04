@@ -113,7 +113,6 @@ export default {
   }
   .main-number-debt {
     text-align: center;
-    border: solid 1px red;
   }
   .main-number-font {
     font-size: 50px;

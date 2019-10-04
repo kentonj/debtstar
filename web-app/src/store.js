@@ -7,13 +7,15 @@ export const store = {
   state: {
     user: [],
     userDebt: [],
+    userSpending: [],
   },
   addUserData(userInfo) {
     this.state.user.push(userInfo);
   },
   addUserDebt(data) {
-    console.log('here');
-    console.log(data);
     this.state.userDebt.push(data);
   },
+  addUserSpending(data) {
+    this.state.userSpending.push(data);
+  }
 };

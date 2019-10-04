@@ -28,7 +28,8 @@
       .welcome-text
         | Welcome,
       h2 Looks like you do not have a bank account set up with Debt Star
-      b-button(@click="goToSetUp") Set Up Account
+      br
+      b-button.theme-dark-blue.has-text-white(@click="goToSetUp") Set Up Account
 </template>
 <script>
 import { store } from "../store.js";
@@ -48,14 +49,12 @@ export default {
       investmentMonths: 0,
       dollarsInvested: 0,
       under_budget: 100,
+      itemList2: [],
     }
   },
   computed: {
     userName() {
       return this.user[0] ? this.user[0].name : 'User';
-    },
-    itemList2() {
-      return this.myDebtList[0] ? this.myDebtList[0].data : [];
     },
     dollars_Invested() {
       return Number(this.dollarsInvested);
@@ -73,7 +72,16 @@ export default {
     goToSetUp() {
       this.$router.push({ name: 'addbank' });
     },
-  }
+    getDebt() {
+      api.getAccountsSummary(this.user[0].uid)
+        .then((data) => {
+          this.itemList2 = data.data;
+       });
+    },
+  },
+  mounted(){
+    this.getDebt();
+  },
 };
 </script>
 
