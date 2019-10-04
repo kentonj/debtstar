@@ -3,6 +3,7 @@
 ## Project setup
 ```
 npm install
+npm install --save vue-async-computed
 ```
 
 ### Compiles and hot-reloads for development
