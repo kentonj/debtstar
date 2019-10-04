@@ -13,6 +13,16 @@ import plaid
 from dbmodels import Token, SuperCollection
 import sys
 
+category_dict = {
+        'Travel':["Travel", "Airlines and Aviation Services", "Car Service", "Ride Share"],
+        'Payments':["Payment"],
+        'Food':["Food and Drink", "Restaurants", "Coffee Shop"], 
+        'Shopping':["Shops", "Sporting Goods"],
+        'Recreation':["Recreation","Gyms and Fitness Centers"],
+        'Account':["Credit Card", "Transfer", "Debit", "Deposit", "Credit"],
+        'Other':[]
+    }
+
 POSTGRES_HOST = os.environ.get('POSTGRES_HOST', 'postgres')
 POSTGRES_PORT = os.environ.get('POSTGRES_PORT', 5432)
 POSTGRES_DB = os.environ.get('POSTGRES_DB')
@@ -82,7 +92,7 @@ def store_access_token():
     token.upsert()
 
     print('writing item without access_token to firestore', file=sys.stderr)
-    item_collection = SuperCollection(firestore_db.collection('items'), 'item_id')
+    item_collection = SuperCollection(firestore_db, 'items', 'item_id')
     exchange_response.pop('access_token')
     exchange_response['user_id'] = user_id
     item_collection.write(exchange_response)
@@ -90,7 +100,7 @@ def store_access_token():
     print('getting all accounts and storing to filestore', file=sys.stderr)
     # now also store all accounts from that item in firestore too
     accounts_response = plaid_client.Accounts.get(access_token=access_token)
-    account_collection = SuperCollection(firestore_db.collection('accounts'), 'account_id')
+    account_collection = SuperCollection(firestore_db, 'accounts', 'account_id')
     for account in accounts_response['accounts']:
         account['user_id'] = user_id
         account['item_id'] = item_id
@@ -99,7 +109,7 @@ def store_access_token():
     
     print('getting all liabilities and storing to filestore', file=sys.stderr)
     liability_summary_list = extract_liability_summary(access_token)
-    liability_collection = SuperCollection(firestore_db.collection('liabilities'))
+    liability_collection = SuperCollection(firestore_db, 'liabilities')
     for i, liability in enumerate(liability_summary_list):
         liability['user_id'] = user_id
         liability['item_id'] = item_id
@@ -160,7 +170,7 @@ def get_accounts_summary():
             response.status_code = 403
         else:
             print('Initializing liabilities collection', file=sys.stderr)
-            liabilities_collection = SuperCollection(firestore_db.collection('liabilities'))
+            liabilities_collection = SuperCollection(firestore_db, 'liabilities')
             print('successfully initialized liabilities collection, calling .get_by_user', file=sys.stderr)
             all_accounts_list = liabilities_collection.get_by_user(user_id)
             print('got account (liabilities) list from .get_by_user, packagin json response', file=sys.stderr)
@@ -208,13 +218,23 @@ def store_account_transactions(access_token, n_months, user_id):
     end = now.strftime('%Y-%m-%d')
     start = (now - timedelta(n_months*365/12)).strftime('%Y-%m-%d')
     transactions_response = plaid_client.Transactions.get(access_token=access_token, start_date=start, end_date=end)
-    transactions_collection = SuperCollection(collection=firestore_db.collection('transactions'),
+    transactions_collection = SuperCollection(db=firestore_db,
+                                                collection='transactions',
                                                 pk_col='transaction_id')
     keys_list = []
-    for transaction in transactions_response['transactions']:
+    print('got transactions response from plaid client', file=sys.stderr)
+    all_transactions = transactions_response['transactions']
+    print('all transactions before adding user_id:{}'.format(len(all_transactions)), file=sys.stderr)
+    all_transactions_list = []
+    for transaction in all_transactions:
         transaction['user_id'] = user_id
-        transaction_id = transactions_collection.write(transaction)
-        keys_list.append(transaction_id)
+        all_transactions_list.append(transaction)
+    print('writing all transactions to firestore non-batch style:{}'.format(len(all_transactions_list)), file=sys.stderr)
+    # transactions_collection.batchupdate(all_transactions_list)
+    for transaction in all_transactions_list:
+        transactions_collection.update(transaction)
+    print('last transaction written with nonbatch: {}'.format(all_transactions_list[-1]), file=sys.stderr)
+    print('DONE writing all transactions to firestore nonbatch style', file=sys.stderr)
     return keys_list
 
 @app.route('/api/v1/sync_transactions', methods=['POST'])
@@ -233,29 +253,62 @@ def sync_transactions():
             response = jsonify(data)
             response.status_code = 403
         else:
-            all_transactions_list = []
-            for token in Token.query.filter_by(user_id=user_id).all():
-                # token.item_id and token.access_token
-                access_token = token.access_token
-                transaction_ids = store_account_transactions(access_token, n_months, user_id)
-                all_transactions_list += transaction_ids
-            response = jsonify({'number_synced_transactions':len(all_transactions_list)})
+            # all_transactions_list = []
+            # print('starting to sync transactions', file=sys.stderr)
+            # all_transactions = Token.query.filter_by(user_id=user_id).all()
+            # for i, token in enumerate(all_transactions):
+            #     print('syncing from item: {}/{}'.format(i,len(all_transactions)), file=sys.stderr)
+            #     # token.item_id and token.access_token
+            #     access_token = token.access_token
+            #     transaction_ids = store_account_transactions(access_token, n_months, user_id)
+            #     all_transactions_list += transaction_ids
+            # print('packaging up JSON', file=sys.stderr)
+            # response = jsonify({'number_synced_transactions':len(all_transactions_list)})
+            # response.status_code = 200
+            print('doing nothing with this endpoint', file=sys.stderr)
+            response = jsonify(None)
             response.status_code = 200
         return response
 
+def consolidate_categories(category_list):
+    print('got into consolidate categories', file=sys.stderr)
+    first_category = category_list[0]
+    for key, value_list in category_dict.items():
+        if first_category in value_list:
+            print('got out of consolidate categories', file=sys.stderr)
+            return key
+        else:
+            pass
+    print('got out of consolidate categories', file=sys.stderr)
+    return 'Other'
+
+
 def get_category_stats(transaction_list):
-    category_totals = {}
+    print('category_dict:{}'.format(category_dict), file=sys.stderr)
+    category_totals = {key:{'count':0, 'amount':0} for key in category_dict.keys()}
+    print('category totals before addition:{}'.format(category_totals), file=sys.stderr)
     for transaction in transaction_list:
         category_list = transaction.get('category_list')
-        for category in category_list:
-            running_vals = category_totals.get(category, None)
-            if running_vals is None:
-                running_vals = {'count':0, 'amount':0}
-            running_vals['amount'] += transaction['amount']
-            running_vals['count'] += 1
-            category_totals[category] = running_vals
-    # reformat for frontend
+        # for category in category_list:
+        #     running_vals = category_totals.get(category, None)
+        #     if running_vals is None:
+        #         running_vals = {'count':0, 'amount':0}
+        #     running_vals['amount'] += transaction['amount']
+        #     running_vals['count'] += 1
+        #     category_totals[category] = running_vals
+        category = consolidate_categories(category_list)
+        print('getting running_vals', file=sys.stderr)
+        running_vals = category_totals.get(category, None)
+        if running_vals is None:
+            running_vals = {'count':0, 'amount':0}
+        print('adding to running_vals', file=sys.stderr)
+        running_vals['amount'] += transaction['amount']
+        running_vals['count'] += 1
+        print('category_totals[{}]'.format(category), file=sys.stderr)
+        category_totals[category] = running_vals
+    print('category list:{}'.format(category_totals), file=sys.stderr)
     category_total_list = [{'category':key, 'total':value['amount'], 'count':value['count']} for key, value in category_totals.items()]
+    print('category total list:{}'.format(category_total_list), file=sys.stderr)    
     return category_total_list
 
 def get_account_transactions_from_firestore(user_id, n_months):
@@ -277,6 +330,26 @@ def get_account_transactions_from_firestore(user_id, n_months):
             data_list.append(reduced_dict)
     return data_list
 
+def get_all_transactions(user_id, n_months):
+    now = datetime.now()
+    start = (now - timedelta(int(n_months)*365/12))
+    all_tokens = Token.query.filter_by(user_id=user_id).all()
+    all_transactions_list = []
+    
+    for token in all_tokens:
+        access_token = token.access_token
+        transactions_response = plaid_client.Transactions.get(access_token, 
+                                                                start_date=start.strftime('%Y-%m-%d'),
+                                                                end_date=now.strftime('%Y-%m-%d'))
+        for transaction in transactions_response['transactions']:
+            reduced_dict = {}
+            reduced_dict['name'] = transaction['name']
+            reduced_dict['amount'] = transaction['amount']
+            reduced_dict['date'] = transaction['date']
+            reduced_dict['category_list'] = transaction['category']
+            all_transactions_list.append(reduced_dict)
+    return all_transactions_list
+
 @app.route('/api/v1/get_category_totals', methods=['GET'])
 def get_category_totals():
     '''
@@ -297,18 +370,11 @@ def get_category_totals():
             # all_transactions_list = []
             # account_snapshot_list = firestore_db.collection('accounts')\
             #     .where('user_id', '==', user_id,).stream()
-            # for account_snapshot in account_snapshot_list:
-            #     # pass
-            #     account = account_snapshot.to_dict()
-            #     account_id = account_snapshot.id
-            print('getting all transactions', file=sys.stderr)
-            all_transactions_list = get_account_transactions_from_firestore(user_id, n_months)
+            all_transactions_list = get_all_transactions(user_id, n_months)
             print('got all transactions, getting the stats', file=sys.stderr)
             # # all_transactions_list += transaction_list
             category_total_list = get_category_stats(all_transactions_list)
-            print('got the stats (len-{}:{}'.format(len(category_total_list),category_total_list), file=sys.stderr)
             # data = sorted(category_total_list, key = lambda x: x['total'], reverse=True)
-            print('packaging JSON', file=sys.stderr)
             data = category_total_list
             response = jsonify(data)
             response.status_code = 200

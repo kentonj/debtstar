@@ -3,6 +3,7 @@ from sqlalchemy import Column, Integer, String, BigInteger, DateTime
 from sqlalchemy.sql import func
 from flask_sqlalchemy import SQLAlchemy
 from firebase_admin import credentials, firestore, initialize_app
+import sys
 # from server import db
 # set up dummy database
 db = SQLAlchemy()
@@ -10,8 +11,9 @@ db = SQLAlchemy()
 
 
 class SuperCollection():
-    def __init__(self, collection, pk_col=None):
-        self.collection = collection
+    def __init__(self, db, collection, pk_col=None):
+        self.db = db
+        self.collection = db.collection(collection)
         self.pk_col = pk_col
     def upsert(self, data):
         if self.pk_col is None:
@@ -42,16 +44,44 @@ class SuperCollection():
             doc_ref = self.collection.document(pk)
         doc_ref.set(data)
         return None
-    def update(self, data):
-        data['timestamp']=firestore.SERVER_TIMESTAMP
-        if self.pk_col is None:
-            doc_ref = self.collection.document()
-        else:
-            data.pop(self.pk_col)
-            pk = data.get(self.pk_col)
-            doc_ref = self.collection.document(pk)
-        doc_ref.update(data)
+        
+    def batchupdate(self, data_list):
+        print('starting batch write of {}'.format(len(data_list)), file=sys.stderr)
+        max_batch_write = 300
+        batch = self.db.batch()
+        for j, data in enumerate(data_list):
+            # print('data:{}'.format(data), file=sys.stderr)
+            print('working on item: {}/{}'.format(j, len(data_list)), file=sys.stderr)
+            data['timestamp']=firestore.SERVER_TIMESTAMP
+            if self.pk_col is None:
+                doc_ref = self.collection.document()
+            else:
+                # data.pop(self.pk_col)
+                pk = data.get(self.pk_col)
+                doc_ref = self.collection.document(pk)
+            print('batch.set executing', file=sys.stderr)
+            batch.update(doc_ref, data)
+            print('batch.set done executing', file=sys.stderr)
+        batch.commit()
         return None
+    def update(self, data):
+        try:
+            data['timestamp']=firestore.SERVER_TIMESTAMP
+            if self.pk_col is None:
+                doc_ref = self.collection.document()
+            else:
+                try:
+                    data.pop(self.pk_col)
+                except:
+                    print('no {} to pop off data structure'.format(self.pk_col), file=sys.stderr)
+                pk = data.get(self.pk_col)
+                doc_ref = self.collection.document(pk)
+            print('updating item:', file=sys.stderr)
+            doc_ref.update(data)
+            print('successful update:', file=sys.stderr)
+            return None
+        except Exception as e:
+            print('ERROR from UPDATE: {}'.format(e), file=sys.stderr)
     def get_by_user(self, user_id):
         data_list = []
         docs = self.collection.where('user_id', '==', user_id,).stream()
