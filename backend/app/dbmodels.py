@@ -10,13 +10,16 @@ db = SQLAlchemy()
 
 
 class SuperCollection():
-    def __init__(self, collection, pk_col):
+    def __init__(self, collection, pk_col=None):
         self.collection = collection
         self.pk_col = pk_col
     def upsert(self, data):
-        pk = data.get(self.pk_col)
-        data.pop(self.pk_col)
-        doc_ref = self.collection.document(pk)
+        if self.pk_col is None:
+            doc_ref = self.collection.document()
+        else:
+            data.pop(self.pk_col)
+            pk = data.get(self.pk_col)
+            doc_ref = self.collection.document(pk)
         doc = doc_ref.get()
         data['timestamp']=firestore.SERVER_TIMESTAMP
         if doc.exists:
@@ -28,21 +31,34 @@ class SuperCollection():
                 doc_ref.update(data)
         else:
             doc_ref.set(data)
-        return pk
+        return None
     def write(self, data):
         data['timestamp']=firestore.SERVER_TIMESTAMP
-        pk = data.get(self.pk_col)
-        data.pop(self.pk_col)
-        doc_ref = self.collection.document(pk)
+        if self.pk_col is None:
+            doc_ref = self.collection.document()
+        else:
+            data.pop(self.pk_col)
+            pk = data.get(self.pk_col)
+            doc_ref = self.collection.document(pk)
         doc_ref.set(data)
-        return pk
+        return None
     def update(self, data):
         data['timestamp']=firestore.SERVER_TIMESTAMP
-        pk = data.get(self.pk_col)
-        data.pop(self.pk_col)
-        doc_ref = self.collection.document(pk)
+        if self.pk_col is None:
+            doc_ref = self.collection.document()
+        else:
+            data.pop(self.pk_col)
+            pk = data.get(self.pk_col)
+            doc_ref = self.collection.document(pk)
         doc_ref.update(data)
-        return pk
+        return None
+    def get_by_user(self, user_id):
+        data_list = []
+        docs = self.collection.where('user_id', '==', user_id,).stream()
+        for doc in docs:
+            data = doc.to_dict()
+            data_list.append(data)
+        return data_list
         
 class Token(db.Model):
     __tablename__ = 'token'
