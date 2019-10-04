@@ -282,7 +282,6 @@ def consolidate_categories(category_list):
     print('got out of consolidate categories', file=sys.stderr)
     return 'Other'
 
-
 def get_category_stats(transaction_list):
     print('category_dict:{}'.format(category_dict), file=sys.stderr)
     category_totals = {key:{'count':0, 'amount':0} for key in category_dict.keys()}
@@ -307,7 +306,7 @@ def get_category_stats(transaction_list):
         print('category_totals[{}]'.format(category), file=sys.stderr)
         category_totals[category] = running_vals
     print('category list:{}'.format(category_totals), file=sys.stderr)
-    category_total_list = [{'category':key, 'total':value['amount'], 'count':value['count']} for key, value in category_totals.items()]
+    category_total_list = [{'category':key, 'total':round(value['amount'],2), 'count':value['count']} for key, value in category_totals.items()]
     print('category total list:{}'.format(category_total_list), file=sys.stderr)    
     return category_total_list
 
@@ -381,6 +380,34 @@ def get_category_totals():
         print('heres your response:{}'.format(response.status_code), file=sys.stderr)
         print('heres your full response:{}'.format(response), file=sys.stderr)
         return response
+
+def reduction_func(current_count):
+    reduction_percent = 1/current_count
+    return reduction_percent
+
+@app.route('/api/v1/recommend_saving', methods=['GET'])
+def recommend_saving():
+    if request.method == 'GET':
+        # params = request.args
+        # user_id = params.get('user_id', None)
+        # n_months = params.get('n_months', 3)
+        exclude_categories = ['Payment', 'Account', 'Other']
+        user_id = 'EIKvpm56NiNPDf07ZFybSgEhFCg2'
+        n_months = 2
+
+        all_transactions_list = get_all_transactions(user_id, n_months)
+        category_total_list = get_category_stats(all_transactions_list)
+        category_options = [x for x in category_total_list if (x['category'] not in exclude_categories and x['count'] >= 1)]
+        print('here are the category options:{}'.format(category_options), file=sys.stderr)
+        reduced_number_list = []
+        for category_dict in category_options:
+            # 25% reduction, round up to 1 count
+            reduced_number = reduction_func(category_dict['count'])
+            print('reduction percent number:{}, {}'.format(reduced_number, category_dict), file=sys.stderr)
+            reduced_number_list.append(reduced_number)
+
+        response = jsonify(reduced_number_list)
+    return response
 
 if __name__ == '__main__':
     # access_token = 'access-sandbox-a80895e9-baae-47ed-ae93-6f6801d597a1'
