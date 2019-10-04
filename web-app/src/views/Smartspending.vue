@@ -28,6 +28,8 @@
               p Try carpooling or planning routes to save money on gas.
             .box
               p Making your own coffee in the morning could cut down your dining cost.
+            .box
+              p Think about consolidating your streaming subscriptions.
             hr
             .label
               | Total Spent: ${{totalSpent}}
