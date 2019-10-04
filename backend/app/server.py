@@ -248,7 +248,7 @@ def get_category_stats(transaction_list):
 def get_account_transactions_from_firestore(account_id, n_months):
     # get transactions last n months
     now = datetime.now()
-    start = (now - timedelta(n_months*365/12))
+    start = (now - timedelta(int(n_months)*365/12))
     print('start:', start, 'end:', now)
     docs = firestore_db.collection('transactions')\
                 .where('account_id', '==', account_id,).stream()
